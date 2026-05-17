@@ -28,6 +28,7 @@ export default [
         MessageEvent: "readonly",
         RequestInit: "readonly",
         Response: "readonly",
+        URL: "readonly",
         // Node globals (vite.config.ts)
         __dirname: "readonly",
         process: "readonly",

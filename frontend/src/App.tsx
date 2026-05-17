@@ -5,6 +5,7 @@ import { DashboardPage } from "@/pages/DashboardPage";
 import { DomainsPage } from "@/pages/DomainsPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
+import { ScanDetailPage } from "@/pages/ScanDetailPage";
 
 function App() {
   return (
@@ -24,6 +25,14 @@ function App() {
         element={
           <ProtectedRoute>
             <DomainsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/scans/:id"
+        element={
+          <ProtectedRoute>
+            <ScanDetailPage />
           </ProtectedRoute>
         }
       />

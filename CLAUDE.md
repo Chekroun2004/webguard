@@ -200,12 +200,13 @@ Les repositories ne contiennent **aucune** logique métier.
 - `execute_scan` mis à jour : Phase 1 passive + crawl + Phase 2 active avec asyncio.gather
 - 31 nouveaux tests pytest ✅ (130 total)
 
-### 🔲 Étape 8 — Rapports PDF/JSON
-- WeasyPrint (ajouter deps système au Dockerfile)
-- Template HTML/Jinja2 → PDF stylé
-- Export JSON
-- Page détail scan : filtres par sévérité, graphiques (recharts)
-- Comparaison entre scans
+### ✅ Étape 8 — Rapports PDF/JSON (TERMINÉE)
+- `GET /api/v1/scans/{id}/report` → rapport JSON (summary + findings triés par sévérité)
+- `GET /api/v1/scans/{id}/report.pdf` → PDF stylé généré par WeasyPrint + Jinja2
+- Template HTML `app/templates/report.html` : cover, grille de sévérité, liste des vulnérabilités
+- `ScanDetailPage` frontend (`/scans/:id`) : filtres par sévérité, PieChart recharts, boutons export PDF/JSON
+- Lien "Rapport" depuis la ScanCard dans le Dashboard
+- 11 nouveaux tests pytest ✅ (141 total)
 
 ### 🔲 Étape 9 — Polissage
 - `slowapi` rate limiting (5 scans/h par user, ≤10 req/s vers cible)
@@ -252,7 +253,7 @@ verification_token, verified_at, is_verified
 
 - Ce fichier doit être mis à jour à chaque étape complétée et quand le contexte de session approche 90%.
 - Spec de design complète : `docs/superpowers/specs/2026-05-17-webguard-design.md`
-- Dernière session : Étapes 5, 6 et 7 complétées. 130/130 tests ✅. Prochaine tâche : **Étape 8 — Rapports PDF/JSON**.
+- Dernière session : Étapes 5, 6, 7 et 8 complétées. 141/141 tests ✅. Prochaine tâche : **Étape 9 — Polissage**.
 - Note Celery task testing : appeler `execute_scan(scan_id, session)` directement, ne pas passer par le broker.
 - Piège Celery : utiliser `@celery_app.task` (pas `@shared_task`) et importer `app.workers.celery_app` dans `main.py`. Le worker doit démarrer avec `--include=app.workers.tasks.scan`.
 - Piège EventSource : ne supporte pas les headers custom → le token JWT est passé en `?token=` query param (voir `deps.py` et `useScanEvents.ts`).
