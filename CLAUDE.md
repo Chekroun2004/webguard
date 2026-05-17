@@ -102,14 +102,23 @@ Les repositories ne contiennent **aucune** logique métier.
 | `backend/prestart.sh` | Lancé au démarrage Docker : `alembic upgrade head` puis uvicorn |
 | `frontend/src/lib/api.ts` | Client fetch typé avec `ApiError` |
 | `frontend/src/hooks/useAuth.ts` | Hooks TanStack Query pour l'auth |
+| `frontend/src/hooks/useScan.ts` | Hooks TanStack Query pour les scans |
 | `frontend/src/components/ProtectedRoute.tsx` | Guard de route (redirige si pas de token) |
+| `frontend/src/components/SeverityBadge.tsx` | Badge coloré par sévérité |
+| `backend/app/scanners/base.py` | `BaseScanner` ABC + `Finding` dataclass |
+| `backend/app/scanners/headers.py` | `HeadersScanner` — 5 headers de sécurité |
+| `backend/app/services/scan.py` | `ScanService` : orchestration + erreurs métier |
 
 ### Conventions importantes
 - `backend_cors_origins` est un `str` (pas `list[str]`) dans `Settings` — pydantic-settings v2 parse les `list[str]` comme du JSON. Utiliser `settings.cors_origins` (property) dans le code.
 - Tests : base SQLite in-memory avec `StaticPool` (voir `tests/conftest.py`). Ne pas chercher à connecter Postgres dans les tests unitaires.
 - Tous les modèles SQLAlchemy héritent de `app.db.base.Base` et doivent être importés dans `app/db/models/__init__.py`.
 - Les Celery tasks vivront dans `app/workers/tasks/` (créé à l'Étape 4).
-- Les scanners héritent tous de `BaseScanner` (créé à l'Étape 3) : `async scan(target_url, config) -> list[Vulnerability]`.
+- Les scanners héritent tous de `BaseScanner` (`app/scanners/base.py`) : `async scan(url, config) -> list[Finding]`. `Finding` est un dataclass (name, severity, description, recommendation, evidence).
+- Pour tester un scanner : `patch.object(scanner, '_fetch', AsyncMock(return_value={...}))` — pas de vraies requêtes HTTP.
+- `AnyHttpUrl` (Pydantic v2) normalise en ajoutant un `/` final — les assertions de test doivent utiliser `.rstrip("/")`.
+- Nouveaux hooks frontend : `useScan.ts` → `useCreateScan`, `useScanList`, `useScan`.
+- `SeverityBadge` component dans `frontend/src/components/`.
 
 ### Stack technique (décisions verrouillées)
 - **PDF** : WeasyPrint (Étape 8, deps système dans Dockerfile)
@@ -140,15 +149,15 @@ Les repositories ne contiennent **aucune** logique métier.
 - Pages frontend : `LoginPage`, `RegisterPage`, `DashboardPage`
 - `ProtectedRoute`, hooks `useLogin / useRegister / useCurrentUser / useLogout`
 
-### 🔲 Étape 3 — Premier scanner (headers) — PROCHAINE ÉTAPE
-- `BaseScanner` (abstract, `async scan(url, config) -> list[Vulnerability]`)
-- `headers.py` — vérifie CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
-- Modèles `Scan` + `Vulnerability` + migrations
-- `POST /api/v1/scans` (synchrone pour cette étape)
-- Page frontend de lancement de scan et affichage des résultats
-- Tests pytest sur le scanner et les routes
+### ✅ Étape 3 — Premier scanner (headers) (TERMINÉE)
+- `BaseScanner` ABC + `Finding` dataclass dans `app/scanners/base.py`
+- `HeadersScanner` : détecte absence/mauvaise config de CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+- Modèles `Scan` + `Vulnerability` + migration Alembic `0002_add_scans_table`
+- `POST /api/v1/scans` (201), `GET /api/v1/scans`, `GET /api/v1/scans/{id}` — auth + isolation par user
+- 39 tests pytest ✅ (21 nouveaux : 10 scanner + 11 routes)
+- Frontend : formulaire de scan inline, historique des scans avec `SeverityBadge`, détail collapsible par vuln
 
-### 🔲 Étape 4 — Async avec Celery
+### 🔲 Étape 4 — Async avec Celery — PROCHAINE ÉTAPE
 - Config Celery + Redis, tâche `run_scan(scan_id)`
 - `POST /api/v1/scans` devient async (retourne immédiatement)
 - `GET /api/v1/scans/{id}/status`
@@ -221,4 +230,4 @@ verification_token, verified_at, is_verified
 
 - Ce fichier doit être mis à jour à chaque étape complétée et quand le contexte de session approche 90%.
 - Spec de design complète : `docs/superpowers/specs/2026-05-17-webguard-design.md`
-- Dernière session : Étapes 1 et 2 complétées. Prochaine tâche : **Étape 3 — BaseScanner + headers.py**.
+- Dernière session : Étapes 1, 2 et 3 complétées. Prochaine tâche : **Étape 4 — Celery async + SSE**.
