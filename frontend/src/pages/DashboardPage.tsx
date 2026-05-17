@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { LogOut, ShieldCheck, Loader2 } from "lucide-react";
 
 import { useCurrentUser, useLogout } from "@/hooks/useAuth";
@@ -212,6 +213,12 @@ export function DashboardPage() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground hidden sm:block">{user?.email}</span>
+            <Link
+              to="/domains"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Mes domaines
+            </Link>
             <button
               onClick={logout}
               className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"

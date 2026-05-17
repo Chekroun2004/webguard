@@ -10,6 +10,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.db.models.scan import Scan
+    from app.db.models.domain import DomainOwnership
 
 
 class User(Base):
@@ -28,3 +29,4 @@ class User(Base):
     )
 
     scans: Mapped[list["Scan"]] = relationship("Scan", back_populates="user", cascade="all, delete-orphan")
+    domains: Mapped[list["DomainOwnership"]] = relationship("DomainOwnership", back_populates="user", cascade="all, delete-orphan")
