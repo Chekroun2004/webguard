@@ -14,8 +14,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.scan import Vulnerability
 from app.repositories.scan import get_scan_by_id
+from app.scanners.cookies import CookiesScanner
 from app.scanners.headers import HeadersScanner
+from app.scanners.http_methods import HttpMethodsScanner
+from app.scanners.sensitive_files import SensitiveFilesScanner
+from app.scanners.ssl_tls import SslTlsScanner
+from app.scanners.technologies import TechnologiesScanner
 from app.workers.celery_app import celery_app
+
+SCANNERS = [
+    HeadersScanner,
+    CookiesScanner,
+    SslTlsScanner,
+    SensitiveFilesScanner,
+    TechnologiesScanner,
+    HttpMethodsScanner,
+]
 
 
 async def execute_scan(scan_id: int, session: AsyncSession) -> None:
@@ -33,10 +47,19 @@ async def execute_scan(scan_id: int, session: AsyncSession) -> None:
     scan.status = "running"
     await session.flush()
 
-    # 2. Run scanners
+    # 2. Run all scanners concurrently
     try:
-        scanner = HeadersScanner()
-        findings = await scanner.scan(str(scan.url), config={})
+        url = str(scan.url)
+        results = await asyncio.gather(
+            *[cls().scan(url, config={}) for cls in SCANNERS],
+            return_exceptions=True,
+        )
+
+        errors = [r for r in results if isinstance(r, BaseException)]
+        if errors:
+            raise errors[0]
+
+        findings = [f for batch in results if isinstance(batch, list) for f in batch]
 
         for f in findings:
             session.add(
