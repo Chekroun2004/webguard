@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Query, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,12 +16,14 @@ async def get_auth_service(db: AsyncSession = Depends(get_db)) -> AuthService:
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+    token: str | None = Query(default=None),  # fallback for EventSource (no custom headers)
     auth_service: AuthService = Depends(get_auth_service),
 ) -> User:
-    """Resolve the Bearer token to a User, or raise 401."""
-    if not credentials:
+    """Resolve the Bearer token (header or ?token= query param) to a User, or raise 401."""
+    raw_token = (credentials.credentials if credentials else None) or token
+    if not raw_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Non authentifié.")
     try:
-        return await auth_service.get_current_user(credentials.credentials)
+        return await auth_service.get_current_user(raw_token)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
