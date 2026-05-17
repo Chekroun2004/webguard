@@ -1,6 +1,7 @@
 """
 Pydantic v2 schemas for Scan and Vulnerability.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -9,11 +10,13 @@ from pydantic import AnyHttpUrl, BaseModel, Field
 
 # ── Request ──────────────────────────────────────────────────────────────────
 
+
 class ScanCreate(BaseModel):
     url: AnyHttpUrl
 
 
 # ── Response fragments ────────────────────────────────────────────────────────
+
 
 class VulnerabilityOut(BaseModel):
     id: int

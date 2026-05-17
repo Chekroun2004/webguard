@@ -1,4 +1,5 @@
 """Domain ownership repository — DB access only, no business logic."""
+
 from __future__ import annotations
 
 import secrets
@@ -24,9 +25,7 @@ async def create_domain_record(
 
 
 async def get_domain_by_id(db: AsyncSession, domain_id: int) -> DomainOwnership | None:
-    result = await db.execute(
-        select(DomainOwnership).where(DomainOwnership.id == domain_id)
-    )
+    result = await db.execute(select(DomainOwnership).where(DomainOwnership.id == domain_id))
     return result.scalar_one_or_none()
 
 

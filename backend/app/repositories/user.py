@@ -26,6 +26,6 @@ class UserRepository:
     ) -> User:
         user = User(email=email, password_hash=password_hash, full_name=full_name)
         self._db.add(user)
-        await self._db.flush()      # assign PK without committing the transaction
+        await self._db.flush()  # assign PK without committing the transaction
         await self._db.refresh(user)
         return user

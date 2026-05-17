@@ -3,6 +3,7 @@ SslTlsScanner — checks SSL/TLS protocol version and certificate validity.
 
 Flags: TLS < 1.2, certificate expiring within 90 days, SSL errors.
 """
+
 from __future__ import annotations
 
 import asyncio

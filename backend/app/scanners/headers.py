@@ -5,6 +5,7 @@ Checks:
   - Presence of: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
   - Quality of: CSP (unsafe-inline / unsafe-eval), HSTS (max-age >= 31536000)
 """
+
 from __future__ import annotations
 
 import re
@@ -27,9 +28,7 @@ class HeadersScanner(BaseScanner):
     async def scan(self, url: str, config: dict) -> list[Finding]:
         response = await self._fetch(url)
         # Normalize header keys to title-case for consistent lookup
-        headers: dict[str, str] = {
-            k.title(): v for k, v in response["headers"].items()
-        }
+        headers: dict[str, str] = {k.title(): v for k, v in response["headers"].items()}
 
         findings: list[Finding] = []
 

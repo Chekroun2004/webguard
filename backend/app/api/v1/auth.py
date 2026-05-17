@@ -29,9 +29,7 @@ async def login(
     try:
         return await auth_service.login(data.email, data.password)
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 
 
 @router.post("/refresh", response_model=TokenPair)
@@ -42,9 +40,7 @@ async def refresh(
     try:
         return await auth_service.refresh(data.refresh_token)
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 
 
 @router.get("/me", response_model=UserRead)

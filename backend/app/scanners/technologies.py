@@ -4,6 +4,7 @@ TechnologiesScanner — detects technology/version disclosure via HTTP headers.
 Flags: Server header with version string (medium), without version (low),
 and disclosure headers like X-Powered-By, X-Aspnet-Version.
 """
+
 from __future__ import annotations
 
 import re
@@ -26,9 +27,7 @@ DISCLOSURE_HEADERS = [
 class TechnologiesScanner(BaseScanner):
     async def scan(self, url: str, config: dict) -> list[Finding]:
         response = await self._fetch(url)
-        headers: dict[str, str] = {
-            k.title(): v for k, v in response["headers"].items()
-        }
+        headers: dict[str, str] = {k.title(): v for k, v in response["headers"].items()}
         findings: list[Finding] = []
 
         server = headers.get("Server", "")
@@ -64,9 +63,7 @@ class TechnologiesScanner(BaseScanner):
                     Finding(
                         name="Technology Disclosure",
                         severity="low",
-                        description=(
-                            f"The '{header}' header discloses technology information."
-                        ),
+                        description=(f"The '{header}' header discloses technology information."),
                         recommendation=f"Remove or mask the '{header}' header.",
                         evidence=f"{header}: {value}",
                     )

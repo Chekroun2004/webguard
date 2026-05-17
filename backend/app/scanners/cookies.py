@@ -4,6 +4,7 @@ CookiesScanner — checks Set-Cookie header security attributes.
 Flags cookies missing: Secure, HttpOnly, SameSite.
 Also flags SameSite=None without Secure (allows cross-site sending over HTTP).
 """
+
 from __future__ import annotations
 
 import httpx
@@ -78,9 +79,7 @@ class CookiesScanner(BaseScanner):
                 Finding(
                     name="Cookie SameSite=None Without Secure",
                     severity="medium",
-                    description=(
-                        f"Cookie '{name}' sets SameSite=None but lacks the Secure flag."
-                    ),
+                    description=(f"Cookie '{name}' sets SameSite=None but lacks the Secure flag."),
                     recommendation="Add the Secure flag when using SameSite=None.",
                     evidence=raw,
                 )

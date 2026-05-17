@@ -5,6 +5,7 @@ Strategy: mock the internal _fetch method so no real HTTP calls are made.
 Each test verifies that a specific security header misconfiguration or absence
 is correctly detected (or not detected on a clean site).
 """
+
 from unittest.mock import AsyncMock, patch
 
 from app.scanners.headers import HeadersScanner

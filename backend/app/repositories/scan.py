@@ -1,6 +1,7 @@
 """
 Scan repository — thin async DB layer (no business logic here).
 """
+
 from __future__ import annotations
 
 from sqlalchemy import select
@@ -21,9 +22,7 @@ async def create_pending_scan(db: AsyncSession, user_id: int, url: str) -> Scan:
 
 async def get_scan_by_id(db: AsyncSession, scan_id: int) -> Scan | None:
     result = await db.execute(
-        select(Scan)
-        .where(Scan.id == scan_id)
-        .options(selectinload(Scan.vulnerabilities))
+        select(Scan).where(Scan.id == scan_id).options(selectinload(Scan.vulnerabilities))
     )
     return result.scalar_one_or_none()
 
