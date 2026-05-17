@@ -1,6 +1,5 @@
 from functools import lru_cache
 
-from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,14 +26,14 @@ class Settings(BaseSettings):
 
     redis_url: str = "redis://redis:6379/0"
 
-    backend_cors_origins: list[str] = ["http://localhost:5173"]
+    # Comma-separated string — pydantic-settings v2 parses list[str] as JSON,
+    # which breaks plain URLs. We keep it as str and expose a property instead.
+    backend_cors_origins: str = "http://localhost:5173"
 
-    @field_validator("backend_cors_origins", mode="before")
-    @classmethod
-    def _split_cors(cls, value: str | list[str]) -> list[str]:
-        if isinstance(value, str):
-            return [origin.strip() for origin in value.split(",") if origin.strip()]
-        return value
+    @property
+    def cors_origins(self) -> list[str]:
+        """Return CORS origins as a list (comma-separated in env var)."""
+        return [o.strip() for o in self.backend_cors_origins.split(",") if o.strip()]
 
     @property
     def database_url(self) -> str:
