@@ -1,0 +1,14 @@
+export type User = {
+  id: number;
+  email: string;
+  full_name: string | null;
+  is_active: boolean;
+  role: string;
+  created_at: string;
+};
+
+export type TokenPair = {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+};
