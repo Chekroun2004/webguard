@@ -190,9 +190,15 @@ Les repositories ne contiennent **aucune** logique métier.
 - `execute_scan` mis à jour pour lancer les 6 scanners en parallèle (`asyncio.gather`)
 - 31 nouveaux tests pytest ✅ (99 total)
 
-### 🔲 Étape 7 — Crawler + scanners Phase 2 (actifs)
-- `crawler.py` (respect robots.txt, profondeur configurable)
-- `xss.py`, `sqli.py`, `open_redirect.py`, `csrf.py`, `directory_listing.py`
+### ✅ Étape 7 — Crawler + scanners Phase 2 (actifs) (TERMINÉE)
+- `crawler.py` : BFS, respect robots.txt, filtrage domaine, extraction forms/links, max_depth/max_pages configurables
+- `xss.py` : XSS réfléchi — injection dans chaque input de formulaire, détection par réflexion du payload
+- `sqli.py` : SQL injection basée sur les erreurs — patterns MySQL/PostgreSQL/Oracle/SQLite
+- `open_redirect.py` : détection des paramètres de redirection (url, next, redirect, etc.) + sonde externe
+- `csrf.py` : formulaires POST sans token CSRF (_token, csrf_token, authenticity_token, etc.)
+- `directory_listing.py` : "Index of /" dans 10 répertoires courants
+- `execute_scan` mis à jour : Phase 1 passive + crawl + Phase 2 active avec asyncio.gather
+- 31 nouveaux tests pytest ✅ (130 total)
 
 ### 🔲 Étape 8 — Rapports PDF/JSON
 - WeasyPrint (ajouter deps système au Dockerfile)
@@ -246,7 +252,7 @@ verification_token, verified_at, is_verified
 
 - Ce fichier doit être mis à jour à chaque étape complétée et quand le contexte de session approche 90%.
 - Spec de design complète : `docs/superpowers/specs/2026-05-17-webguard-design.md`
-- Dernière session : Étapes 5 et 6 complétées. 99/99 tests ✅. Prochaine tâche : **Étape 7 — Crawler + scanners Phase 2 (actifs)**.
+- Dernière session : Étapes 5, 6 et 7 complétées. 130/130 tests ✅. Prochaine tâche : **Étape 8 — Rapports PDF/JSON**.
 - Note Celery task testing : appeler `execute_scan(scan_id, session)` directement, ne pas passer par le broker.
 - Piège Celery : utiliser `@celery_app.task` (pas `@shared_task`) et importer `app.workers.celery_app` dans `main.py`. Le worker doit démarrer avec `--include=app.workers.tasks.scan`.
 - Piège EventSource : ne supporte pas les headers custom → le token JWT est passé en `?token=` query param (voir `deps.py` et `useScanEvents.ts`).
