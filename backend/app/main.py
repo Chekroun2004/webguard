@@ -1,12 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1.router import api_v1_router
 from app.core.config import settings
 
 app = FastAPI(
     title="WebGuard API",
     description="Scanner de vulnérabilités web — backend API.",
-    version="0.1.0",
+    version="0.2.0",
 )
 
 app.add_middleware(
@@ -16,6 +17,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(api_v1_router)
 
 
 @app.get("/health", tags=["system"])
