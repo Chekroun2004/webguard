@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { LogOut, ShieldCheck, Loader2 } from "lucide-react";
+import { ExternalLink, Loader2, LogOut, ShieldCheck } from "lucide-react";
 
 import { useCurrentUser, useLogout } from "@/hooks/useAuth";
 import { useCreateScan, useScanList } from "@/hooks/useScan";
@@ -130,7 +130,19 @@ function ScanCard({ scan }: { scan: Scan }) {
               </span>
             </>
           )}
-          {!isPending && <span className="text-muted-foreground text-xs">{open ? "▲" : "▼"}</span>}
+          {!isPending && (
+            <>
+              <Link
+                to={`/scans/${scan.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-xs text-primary hover:underline flex items-center gap-0.5"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Rapport
+              </Link>
+              <span className="text-muted-foreground text-xs">{open ? "▲" : "▼"}</span>
+            </>
+          )}
         </div>
       </button>
 
