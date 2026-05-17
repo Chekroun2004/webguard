@@ -3,7 +3,9 @@ import { LogOut, ShieldCheck, Loader2 } from "lucide-react";
 
 import { useCurrentUser, useLogout } from "@/hooks/useAuth";
 import { useCreateScan, useScanList } from "@/hooks/useScan";
+import { useScanEvents } from "@/hooks/useScanEvents";
 import { SeverityBadge } from "@/components/SeverityBadge";
+import { ScanProgressBar } from "@/components/ScanProgressBar";
 import { ApiError } from "@/lib/api";
 import type { Scan } from "@/types";
 
@@ -12,18 +14,29 @@ import type { Scan } from "@/types";
 function ScanForm() {
   const [url, setUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [activeScanId, setActiveScanId] = useState<number | null>(null);
+
   const createScan = useCreateScan();
+  // Subscribe to SSE for the currently running scan
+  const liveStatus = useScanEvents(activeScanId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     try {
-      await createScan.mutateAsync(url);
+      const scan = await createScan.mutateAsync(url);
       setUrl("");
+      setActiveScanId(scan.id);
     } catch (err) {
       setError(err instanceof ApiError ? err.detail : "Erreur inattendue.");
     }
   };
+
+  // Clear active scan once it finishes
+  const displayStatus = liveStatus;
+  if (liveStatus === "completed" || liveStatus === "failed") {
+    // Keep bar visible briefly, then clear on next form submit
+  }
 
   return (
     <div className="rounded-lg border bg-card p-6 space-y-4">
@@ -38,24 +51,31 @@ function ScanForm() {
           placeholder="https://example.com"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          disabled={createScan.isPending}
+          disabled={createScan.isPending || liveStatus === "pending" || liveStatus === "running"}
           className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
         />
         <button
           type="submit"
-          disabled={createScan.isPending}
+          disabled={createScan.isPending || liveStatus === "pending" || liveStatus === "running"}
           className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-1.5"
         >
           {createScan.isPending ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Scan en cours…
+              Envoi…
             </>
           ) : (
             "Scanner"
           )}
         </button>
       </form>
+
+      {activeScanId && displayStatus && displayStatus !== "completed" && (
+        <ScanProgressBar status={displayStatus} />
+      )}
+      {liveStatus === "failed" && (
+        <p className="text-sm text-destructive">Le scan a échoué. Réessaie.</p>
+      )}
     </div>
   );
 }
@@ -69,11 +89,14 @@ function ScanCard({ scan }: { scan: Scan }) {
     return acc;
   }, {});
 
+  const isPending = scan.status === "pending" || scan.status === "running";
+
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
       <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-muted/40 transition-colors"
+        onClick={() => !isPending && setOpen((v) => !v)}
+        disabled={isPending}
+        className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-muted/40 transition-colors disabled:cursor-default"
       >
         <div className="flex flex-col gap-0.5 min-w-0">
           <span className="text-sm font-medium truncate">{scan.url}</span>
@@ -82,7 +105,12 @@ function ScanCard({ scan }: { scan: Scan }) {
           </span>
         </div>
         <div className="flex items-center gap-2 ml-4 shrink-0">
-          {scan.findings.length === 0 ? (
+          {isPending ? (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              {scan.status === "running" ? "Scan en cours…" : "En attente…"}
+            </span>
+          ) : scan.findings.length === 0 ? (
             <span className="text-xs text-green-600 font-medium">✓ Aucune vulnérabilité</span>
           ) : (
             <>
@@ -96,7 +124,7 @@ function ScanCard({ scan }: { scan: Scan }) {
               </span>
             </>
           )}
-          <span className="text-muted-foreground text-xs">{open ? "▲" : "▼"}</span>
+          {!isPending && <span className="text-muted-foreground text-xs">{open ? "▲" : "▼"}</span>}
         </div>
       </button>
 

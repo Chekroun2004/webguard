@@ -19,7 +19,7 @@ export function useScan(id: number | null) {
 
 export function useCreateScan() {
   const qc = useQueryClient();
-  return useMutation({
+  return useMutation<Scan, Error, string>({
     mutationFn: (url: string) =>
       api.post<Scan>("/api/v1/scans", { url }),
     onSuccess: () => {
