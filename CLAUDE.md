@@ -157,15 +157,20 @@ Les repositories ne contiennent **aucune** logique métier.
 - 39 tests pytest ✅ (21 nouveaux : 10 scanner + 11 routes)
 - Frontend : formulaire de scan inline, historique des scans avec `SeverityBadge`, détail collapsible par vuln
 
-### ✅ Étape 4 — Async avec Celery (TERMINÉE)
+### ✅ Étape 4 — Async avec Celery (TERMINÉE — bugs corrigés)
 - `execute_scan(scan_id, session)` fonction async testable directement (sans broker)
-- `run_scan_task` Celery task : `asyncio.run(_run())` → crée session, délègue à `execute_scan`
+- `run_scan_task` Celery task (`@celery_app.task`) : `asyncio.run(_run())` → crée session, délègue à `execute_scan`
 - `POST /api/v1/scans` retourne 202 + `status=pending`, dispatche `run_scan_task.delay(scan_id)`
 - `GET /api/v1/scans/{id}/status` — polling léger `{id, status}`
 - `GET /api/v1/scans/{id}/events` — SSE via `sse-starlette`, émet événement `status` chaque seconde
 - `deps.py` : accept `?token=` query param pour EventSource (pas de custom headers)
 - Frontend : `useScanEvents` hook SSE, `ScanProgressBar` component, form bloqué pendant scan
 - 48/48 tests pytest ✅ (20 nouveaux)
+- **Bugs corrigés post-livraison** :
+  - `@shared_task` → `@celery_app.task` (le shared_task utilisait le broker AMQP par défaut au lieu de Redis)
+  - `import app.workers.celery_app` ajouté dans `main.py` (broker Redis initialisé au démarrage FastAPI)
+  - `--include=app.workers.tasks.scan` ajouté à la commande worker dans `docker-compose.yml` (tâche non enregistrée)
+- **Bug restant** : la barre de progression SSE ne se termine pas toujours côté frontend — à investiguer en Étape 5 ou en début de session suivante
 
 ### 🔲 Étape 5 — Vérification d'ownership de domaine — PROCHAINE ÉTAPE
 
@@ -235,5 +240,7 @@ verification_token, verified_at, is_verified
 
 - Ce fichier doit être mis à jour à chaque étape complétée et quand le contexte de session approche 90%.
 - Spec de design complète : `docs/superpowers/specs/2026-05-17-webguard-design.md`
-- Dernière session : Étapes 1, 2, 3 et 4 complétées. Prochaine tâche : **Étape 5 — Domain ownership verification**.
+- Dernière session : Étapes 1, 2, 3 et 4 complétées + bugs Celery corrigés. Prochaine tâche : **débugger la barre de progression SSE puis Étape 5**.
 - Note Celery task testing : appeler `execute_scan(scan_id, session)` directement, ne pas passer par le broker.
+- Piège Celery : utiliser `@celery_app.task` (pas `@shared_task`) et importer `app.workers.celery_app` dans `main.py`. Le worker doit démarrer avec `--include=app.workers.tasks.scan`.
+- Piège EventSource : ne supporte pas les headers custom → le token JWT est passé en `?token=` query param (voir `deps.py` et `useScanEvents.ts`).
