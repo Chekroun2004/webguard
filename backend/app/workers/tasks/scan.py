@@ -5,6 +5,7 @@ Architecture:
   run_scan_task(scan_id)  — sync Celery entry point, calls asyncio.run()
   execute_scan(scan_id, session)  — async business logic, testable directly
 """
+
 from __future__ import annotations
 
 import asyncio

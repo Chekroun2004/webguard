@@ -1,4 +1,5 @@
 """Domain ownership service — verification logic (file & DNS)."""
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -104,6 +105,4 @@ class DomainService:
                 if txt_bytes.decode() == expected:
                     return
 
-        raise DomainVerificationError(
-            f'TXT record not found: {name} must contain "{expected}"'
-        )
+        raise DomainVerificationError(f'TXT record not found: {name} must contain "{expected}"')

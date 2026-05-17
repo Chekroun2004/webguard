@@ -3,6 +3,7 @@ Unit tests for Phase 1 passive scanners — Étape 6.
 
 Strategy: mock the scanner's fetchable method so no real HTTP/SSL calls are made.
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
@@ -32,7 +33,8 @@ class TestCookiesScanner:
     async def test_missing_secure_flag(self):
         scanner = CookiesScanner()
         with patch.object(
-            scanner, "_fetch",
+            scanner,
+            "_fetch",
             AsyncMock(return_value=resp({}, ["session=abc; HttpOnly; SameSite=Lax"])),
         ):
             findings = await scanner.scan("https://example.com", {})
@@ -41,7 +43,8 @@ class TestCookiesScanner:
     async def test_missing_httponly_flag(self):
         scanner = CookiesScanner()
         with patch.object(
-            scanner, "_fetch",
+            scanner,
+            "_fetch",
             AsyncMock(return_value=resp({}, ["session=abc; Secure; SameSite=Lax"])),
         ):
             findings = await scanner.scan("https://example.com", {})
@@ -50,7 +53,8 @@ class TestCookiesScanner:
     async def test_missing_samesite(self):
         scanner = CookiesScanner()
         with patch.object(
-            scanner, "_fetch",
+            scanner,
+            "_fetch",
             AsyncMock(return_value=resp({}, ["session=abc; Secure; HttpOnly"])),
         ):
             findings = await scanner.scan("https://example.com", {})
@@ -59,7 +63,8 @@ class TestCookiesScanner:
     async def test_samesite_none_without_secure(self):
         scanner = CookiesScanner()
         with patch.object(
-            scanner, "_fetch",
+            scanner,
+            "_fetch",
             AsyncMock(return_value=resp({}, ["session=abc; HttpOnly; SameSite=None"])),
         ):
             findings = await scanner.scan("https://example.com", {})
@@ -68,10 +73,9 @@ class TestCookiesScanner:
     async def test_well_configured_cookie_no_findings(self):
         scanner = CookiesScanner()
         with patch.object(
-            scanner, "_fetch",
-            AsyncMock(return_value=resp(
-                {}, ["session=abc; Secure; HttpOnly; SameSite=Strict"]
-            )),
+            scanner,
+            "_fetch",
+            AsyncMock(return_value=resp({}, ["session=abc; Secure; HttpOnly; SameSite=Strict"])),
         ):
             findings = await scanner.scan("https://example.com", {})
         assert findings == []
@@ -82,9 +86,7 @@ class TestCookiesScanner:
             "session=abc; Secure; HttpOnly; SameSite=Strict",
             "tracking=xyz",  # missing everything
         ]
-        with patch.object(
-            scanner, "_fetch", AsyncMock(return_value=resp({}, cookies))
-        ):
+        with patch.object(scanner, "_fetch", AsyncMock(return_value=resp({}, cookies))):
             findings = await scanner.scan("https://example.com", {})
         names = [f.name for f in findings]
         assert "Cookie Missing Secure Flag" in names
@@ -217,7 +219,8 @@ class TestTechnologiesScanner:
     async def test_server_with_version_medium(self):
         scanner = TechnologiesScanner()
         with patch.object(
-            scanner, "_fetch",
+            scanner,
+            "_fetch",
             AsyncMock(return_value=resp({"Server": "Apache/2.4.41 (Ubuntu)"})),
         ):
             findings = await scanner.scan("https://example.com", {})
@@ -227,9 +230,7 @@ class TestTechnologiesScanner:
 
     async def test_server_without_version_low(self):
         scanner = TechnologiesScanner()
-        with patch.object(
-            scanner, "_fetch", AsyncMock(return_value=resp({"Server": "nginx"}))
-        ):
+        with patch.object(scanner, "_fetch", AsyncMock(return_value=resp({"Server": "nginx"}))):
             findings = await scanner.scan("https://example.com", {})
         sevs = {f.name: f.severity for f in findings}
         assert "Server Version Disclosure" in sevs
@@ -238,7 +239,8 @@ class TestTechnologiesScanner:
     async def test_x_powered_by_flagged(self):
         scanner = TechnologiesScanner()
         with patch.object(
-            scanner, "_fetch",
+            scanner,
+            "_fetch",
             AsyncMock(return_value=resp({"X-Powered-By": "PHP/8.1.0"})),
         ):
             findings = await scanner.scan("https://example.com", {})
@@ -247,7 +249,8 @@ class TestTechnologiesScanner:
     async def test_aspnet_version_header_flagged(self):
         scanner = TechnologiesScanner()
         with patch.object(
-            scanner, "_fetch",
+            scanner,
+            "_fetch",
             AsyncMock(return_value=resp({"X-Aspnet-Version": "4.0.30319"})),
         ):
             findings = await scanner.scan("https://example.com", {})
@@ -256,7 +259,8 @@ class TestTechnologiesScanner:
     async def test_no_disclosure_headers_no_findings(self):
         scanner = TechnologiesScanner()
         with patch.object(
-            scanner, "_fetch",
+            scanner,
+            "_fetch",
             AsyncMock(return_value=resp({"Content-Type": "text/html"})),
         ):
             findings = await scanner.scan("https://example.com", {})
@@ -270,7 +274,8 @@ class TestHttpMethodsScanner:
     async def test_trace_flagged_high(self):
         scanner = HttpMethodsScanner()
         with patch.object(
-            scanner, "_options",
+            scanner,
+            "_options",
             AsyncMock(return_value={"status": 200, "allow": "GET, POST, TRACE"}),
         ):
             findings = await scanner.scan("https://example.com", {})
@@ -281,7 +286,8 @@ class TestHttpMethodsScanner:
     async def test_put_flagged_medium(self):
         scanner = HttpMethodsScanner()
         with patch.object(
-            scanner, "_options",
+            scanner,
+            "_options",
             AsyncMock(return_value={"status": 200, "allow": "GET, POST, PUT"}),
         ):
             findings = await scanner.scan("https://example.com", {})
@@ -290,7 +296,8 @@ class TestHttpMethodsScanner:
     async def test_delete_flagged(self):
         scanner = HttpMethodsScanner()
         with patch.object(
-            scanner, "_options",
+            scanner,
+            "_options",
             AsyncMock(return_value={"status": 200, "allow": "GET, POST, DELETE"}),
         ):
             findings = await scanner.scan("https://example.com", {})
@@ -299,7 +306,8 @@ class TestHttpMethodsScanner:
     async def test_safe_methods_no_findings(self):
         scanner = HttpMethodsScanner()
         with patch.object(
-            scanner, "_options",
+            scanner,
+            "_options",
             AsyncMock(return_value={"status": 200, "allow": "GET, POST, HEAD, OPTIONS"}),
         ):
             findings = await scanner.scan("https://example.com", {})
@@ -308,7 +316,8 @@ class TestHttpMethodsScanner:
     async def test_options_405_no_crash(self):
         scanner = HttpMethodsScanner()
         with patch.object(
-            scanner, "_options",
+            scanner,
+            "_options",
             AsyncMock(return_value={"status": 405, "allow": ""}),
         ):
             findings = await scanner.scan("https://example.com", {})
@@ -317,10 +326,9 @@ class TestHttpMethodsScanner:
     async def test_multiple_dangerous_methods_each_reported(self):
         scanner = HttpMethodsScanner()
         with patch.object(
-            scanner, "_options",
-            AsyncMock(return_value={
-                "status": 200, "allow": "GET, POST, TRACE, PUT, DELETE"
-            }),
+            scanner,
+            "_options",
+            AsyncMock(return_value={"status": 200, "allow": "GET, POST, TRACE, PUT, DELETE"}),
         ):
             findings = await scanner.scan("https://example.com", {})
         evidences = [f.evidence for f in findings]

@@ -3,6 +3,7 @@ HttpMethodsScanner — checks for dangerous HTTP methods via OPTIONS.
 
 Flags: TRACE (high), PUT / DELETE / CONNECT / PATCH on unusual paths (medium).
 """
+
 from __future__ import annotations
 
 import httpx

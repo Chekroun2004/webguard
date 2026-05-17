@@ -7,6 +7,7 @@ GET  /api/v1/scans/{id}        → scan detail (with findings after task complet
 GET  /api/v1/scans/{id}/status → current status
 GET  /api/v1/scans/{id}/events → SSE stream
 """
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from httpx import AsyncClient

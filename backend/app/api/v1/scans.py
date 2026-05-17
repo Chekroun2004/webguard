@@ -7,6 +7,7 @@ GET    /scans/{id}         → scan detail
 GET    /scans/{id}/status  → {id, status}
 GET    /scans/{id}/events  → SSE stream of status updates
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -28,6 +29,7 @@ router = APIRouter(prefix="/scans", tags=["scans"])
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
 
 def _to_out(scan) -> ScanOut:
     return ScanOut(
@@ -51,6 +53,7 @@ def _to_out(scan) -> ScanOut:
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+
 
 @router.post("", status_code=status.HTTP_202_ACCEPTED, response_model=ScanOut)
 async def create_scan(
@@ -85,13 +88,9 @@ async def get_scan(
     try:
         scan = await service.get_scan(scan_id=scan_id, user_id=current_user.id)
     except ScanNotFoundError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found"
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found") from exc
     except ScanForbiddenError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied") from exc
     return _to_out(scan)
 
 
@@ -105,13 +104,9 @@ async def get_scan_status(
     try:
         scan = await service.get_scan(scan_id=scan_id, user_id=current_user.id)
     except ScanNotFoundError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found"
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found") from exc
     except ScanForbiddenError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied") from exc
     return {"id": scan.id, "status": scan.status}
 
 
@@ -127,13 +122,9 @@ async def scan_events(
     try:
         await service.get_scan(scan_id=scan_id, user_id=current_user.id)
     except ScanNotFoundError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found"
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found") from exc
     except ScanForbiddenError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied") from exc
 
     async def event_generator():
         while True:

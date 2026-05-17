@@ -3,6 +3,7 @@ SensitiveFilesScanner — probes for commonly exposed sensitive paths.
 
 Flags any path that returns HTTP 200. 403/404 are not flagged.
 """
+
 from __future__ import annotations
 
 import httpx

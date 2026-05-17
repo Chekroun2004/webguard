@@ -3,6 +3,7 @@ ScanService — orchestrates scan creation and retrieval.
 
 Étape 4: POST creates a pending scan and dispatches a Celery task.
 """
+
 from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession

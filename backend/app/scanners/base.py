@@ -6,6 +6,7 @@ Subclasses must implement:
   - scan(url, config) -> list[Finding]
   - _fetch(url) -> dict  (overridable for testing)
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

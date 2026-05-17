@@ -6,6 +6,7 @@ GET    /domains              → list user's domains
 GET    /domains/{id}         → domain detail
 POST   /domains/{id}/verify  → trigger file or DNS check
 """
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -67,9 +68,7 @@ async def get_domain(
             status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found"
         ) from exc
     except DomainForbiddenError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied") from exc
     return DomainOut.model_validate(record)
 
 
@@ -87,11 +86,7 @@ async def verify_domain(
             status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found"
         ) from exc
     except DomainForbiddenError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied") from exc
     except DomainVerificationError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     return DomainOut.model_validate(record)

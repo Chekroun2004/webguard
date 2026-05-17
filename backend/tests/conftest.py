@@ -5,6 +5,7 @@ Each test function gets:
 - A fresh in-memory SQLite database (all models registered via app.db.models import).
 - A FastAPI AsyncClient wired to that database via dependency override.
 """
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import (

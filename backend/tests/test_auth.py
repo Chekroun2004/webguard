@@ -3,6 +3,7 @@ Auth routes test suite — written before implementation (TDD).
 
 Covers: register, login, refresh, me — happy paths and error cases.
 """
+
 import pytest
 from httpx import AsyncClient
 
@@ -15,6 +16,7 @@ ALICE = {"email": "alice@example.com", "password": "securepass1", "full_name": "
 
 
 # ── shared fixtures ──────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 async def alice(client: AsyncClient) -> dict:
@@ -31,6 +33,7 @@ async def tokens(client: AsyncClient, alice: dict) -> dict:
 
 
 # ── register ─────────────────────────────────────────────────────────────────
+
 
 class TestRegister:
     async def test_creates_user_and_returns_profile(self, client: AsyncClient) -> None:
@@ -71,6 +74,7 @@ class TestRegister:
 
 # ── login ─────────────────────────────────────────────────────────────────────
 
+
 class TestLogin:
     async def test_returns_access_and_refresh_tokens(
         self, client: AsyncClient, alice: dict
@@ -86,9 +90,7 @@ class TestLogin:
         assert data["token_type"] == "bearer"
 
     async def test_wrong_password_returns_401(self, client: AsyncClient, alice: dict) -> None:
-        resp = await client.post(
-            LOGIN, json={"email": ALICE["email"], "password": "wrongpassword"}
-        )
+        resp = await client.post(LOGIN, json={"email": ALICE["email"], "password": "wrongpassword"})
         assert resp.status_code == 401
 
     async def test_unknown_email_returns_401(self, client: AsyncClient) -> None:
@@ -103,6 +105,7 @@ class TestLogin:
 
 
 # ── refresh ───────────────────────────────────────────────────────────────────
+
 
 class TestRefresh:
     async def test_returns_new_token_pair(self, client: AsyncClient, tokens: dict) -> None:
@@ -127,6 +130,7 @@ class TestRefresh:
 
 # ── me ────────────────────────────────────────────────────────────────────────
 
+
 class TestMe:
     async def test_returns_current_user(self, client: AsyncClient, tokens: dict) -> None:
         resp = await client.get(ME, headers={"Authorization": f"Bearer {tokens['access_token']}"})
@@ -149,7 +153,5 @@ class TestMe:
         self, client: AsyncClient, tokens: dict
     ) -> None:
         # Security: refresh tokens must not grant access to protected routes
-        resp = await client.get(
-            ME, headers={"Authorization": f"Bearer {tokens['refresh_token']}"}
-        )
+        resp = await client.get(ME, headers={"Authorization": f"Bearer {tokens['refresh_token']}"})
         assert resp.status_code == 401

@@ -6,6 +6,7 @@ bypassing the Celery broker entirely. This lets us run tasks in-process with SQL
 
 We mock the SCANNERS list in the tasks module so no real HTTP calls are made.
 """
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from sqlalchemy import select
@@ -45,6 +46,7 @@ async def _create_pending_scan(engine, email: str = "task@test.com") -> tuple:
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 
+
 class TestExecuteScan:
     async def test_marks_scan_as_completed(self, engine):
         session_factory, scan_id = await _create_pending_scan(engine, "task1@test.com")
@@ -64,12 +66,16 @@ class TestExecuteScan:
 
         findings = [
             Finding(
-                name="Missing CSP", severity="high",
-                description="No CSP header", recommendation="Add CSP",
+                name="Missing CSP",
+                severity="high",
+                description="No CSP header",
+                recommendation="Add CSP",
             ),
             Finding(
-                name="Missing HSTS", severity="high",
-                description="No HSTS header", recommendation="Add HSTS",
+                name="Missing HSTS",
+                severity="high",
+                description="No HSTS header",
+                recommendation="Add HSTS",
             ),
         ]
 
