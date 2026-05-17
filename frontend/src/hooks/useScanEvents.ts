@@ -5,6 +5,8 @@ import { api } from "@/lib/api";
 
 type ScanStatus = "pending" | "running" | "completed" | "failed";
 
+const TERMINAL: ReadonlySet<ScanStatus> = new Set(["completed", "failed"]);
+
 export function useScanEvents(scanId: number | null) {
   const [status, setStatus] = useState<ScanStatus | null>(null);
   const qc = useQueryClient();
@@ -16,11 +18,34 @@ export function useScanEvents(scanId: number | null) {
     const token = tokenStorage.getAccess();
     if (!token) return;
 
+    let cancelled = false;
+
     const finalize = (s: ScanStatus) => {
+      if (cancelled) return;
       setStatus(s);
-      if (s === "completed" || s === "failed") {
+      if (TERMINAL.has(s)) {
         void qc.invalidateQueries({ queryKey: ["scans"] });
       }
+    };
+
+    // Poll the REST status endpoint with exponential backoff until the scan
+    // reaches a terminal state. Used as fallback when the SSE stream drops.
+    const pollUntilDone = (delay = 1000) => {
+      if (cancelled) return;
+      setTimeout(async () => {
+        if (cancelled) return;
+        try {
+          const data = await api.get<{ id: number; status: ScanStatus }>(
+            `/api/v1/scans/${scanId}/status`
+          );
+          finalize(data.status);
+          if (!TERMINAL.has(data.status)) {
+            pollUntilDone(Math.min(delay * 2, 8000));
+          }
+        } catch {
+          pollUntilDone(delay);
+        }
+      }, delay);
     };
 
     // EventSource doesn't support custom headers — pass token as query param
@@ -29,9 +54,9 @@ export function useScanEvents(scanId: number | null) {
 
     es.addEventListener("status", (e: MessageEvent) => {
       const data = JSON.parse(e.data) as { id: number; status: ScanStatus };
-      setStatus(data.status);
+      if (!cancelled) setStatus(data.status);
 
-      if (data.status === "completed" || data.status === "failed") {
+      if (TERMINAL.has(data.status)) {
         void qc.invalidateQueries({ queryKey: ["scans"] });
         es.close();
       }
@@ -39,15 +64,13 @@ export function useScanEvents(scanId: number | null) {
 
     es.onerror = () => {
       es.close();
-      // Fallback: if the stream drops before the final event arrives, fetch
-      // the current status via REST so the form doesn't stay permanently locked.
-      api
-        .get<{ id: number; status: ScanStatus }>(`/api/v1/scans/${scanId}/status`)
-        .then((data) => finalize(data.status))
-        .catch(() => {/* ignore — the scan list will refresh on next invalidation */});
+      // SSE dropped — fall back to REST polling until terminal state so the
+      // form is never permanently locked by a non-terminal stale status.
+      pollUntilDone();
     };
 
     return () => {
+      cancelled = true;
       es.close();
     };
   }, [scanId, qc]);
