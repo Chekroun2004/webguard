@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_v1_router
 from app.core.config import settings
+import app.workers.celery_app  # noqa: F401 — initialise le broker Celery dès le démarrage
 
 app = FastAPI(
     title="WebGuard API",

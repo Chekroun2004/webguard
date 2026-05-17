@@ -10,12 +10,12 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timezone
 
-from celery import shared_task
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.scan import Scan, Vulnerability
 from app.repositories.scan import get_scan_by_id
 from app.scanners.headers import HeadersScanner
+from app.workers.celery_app import celery_app
 
 
 async def execute_scan(scan_id: int, session: AsyncSession) -> None:
@@ -58,8 +58,8 @@ async def execute_scan(scan_id: int, session: AsyncSession) -> None:
         scan.finished_at = datetime.now(timezone.utc)
 
 
-@shared_task(name="run_scan_task", bind=True, max_retries=0)
-def run_scan_task(self, scan_id: int) -> None:
+@celery_app.task(name="run_scan_task")
+def run_scan_task(scan_id: int) -> None:
     """Celery entry point — creates a fresh DB session and delegates to execute_scan."""
     from app.db.session import sync_session_factory
 
