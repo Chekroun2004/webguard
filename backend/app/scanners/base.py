@@ -8,11 +8,11 @@ Subclasses must implement:
 """
 from __future__ import annotations
 
-import httpx
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+import httpx
 
 Severity = Literal["info", "low", "medium", "high", "critical"]
 

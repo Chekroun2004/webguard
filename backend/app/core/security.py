@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from jose import JWTError, jwt
@@ -21,7 +21,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 def _create_token(payload: dict[str, Any], expires_delta: timedelta) -> str:
     data = payload.copy()
-    data["exp"] = datetime.now(timezone.utc) + expires_delta
+    data["exp"] = datetime.now(UTC) + expires_delta
     return jwt.encode(data, settings.secret_key, algorithm="HS256")
 
 
