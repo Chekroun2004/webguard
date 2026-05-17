@@ -7,39 +7,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.db.models.scan import Scan, Vulnerability
-from app.scanners.base import Finding
+from app.db.models.scan import Scan
 
 
-async def create_scan(
-    db: AsyncSession,
-    user_id: int,
-    url: str,
-    findings: list[Finding],
-    status: str = "completed",
-) -> Scan:
-    from datetime import datetime, timezone
-
-    scan = Scan(
-        user_id=user_id,
-        url=url,
-        status=status,
-        finished_at=datetime.now(timezone.utc),
-    )
+async def create_pending_scan(db: AsyncSession, user_id: int, url: str) -> Scan:
+    """Create a scan with status=pending (no findings yet — task not run)."""
+    scan = Scan(user_id=user_id, url=url, status="pending")
     db.add(scan)
-    await db.flush()  # get scan.id
-
-    for f in findings:
-        vuln = Vulnerability(
-            scan_id=scan.id,
-            name=f.name,
-            severity=f.severity,
-            description=f.description,
-            recommendation=f.recommendation,
-            evidence=f.evidence,
-        )
-        db.add(vuln)
-
     await db.flush()
     await db.refresh(scan, ["vulnerabilities"])
     return scan

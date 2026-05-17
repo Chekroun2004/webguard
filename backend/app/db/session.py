@@ -19,6 +19,10 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
+# Alias used by Celery tasks (they create their own session)
+sync_session_factory = AsyncSessionLocal
+
+
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """FastAPI dependency that yields a database session."""
     async with AsyncSessionLocal() as session:

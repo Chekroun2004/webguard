@@ -1,8 +1,7 @@
 """
-ScanService — orchestrates scanner execution and persistence.
+ScanService — orchestrates scan creation and retrieval.
 
-Étape 3: synchronous (inline) execution.
-Étape 4: replaced by Celery task dispatch.
+Étape 4: POST creates a pending scan and dispatches a Celery task.
 """
 from __future__ import annotations
 
@@ -10,32 +9,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.scan import Scan
 from app.repositories import scan as scan_repo
-from app.scanners.headers import HeadersScanner
 
 
 class ScanService:
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
 
-    async def run_scan(self, user_id: int, url: str) -> Scan:
-        """Run all enabled scanners and persist results."""
-        scanners = [HeadersScanner()]
-        all_findings = []
-        for scanner in scanners:
-            findings = await scanner.scan(url, config={})
-            all_findings.extend(findings)
-
-        scan = await scan_repo.create_scan(
-            db=self._db,
-            user_id=user_id,
-            url=url,
-            findings=all_findings,
-            status="completed",
-        )
-        return scan
+    async def create_scan(self, user_id: int, url: str) -> Scan:
+        """Create a pending scan. Task dispatch is handled by the route."""
+        return await scan_repo.create_pending_scan(self._db, user_id, url)
 
     async def get_scan(self, scan_id: int, user_id: int) -> Scan:
-        """Return scan if it belongs to user_id, else raise."""
         scan = await scan_repo.get_scan_by_id(self._db, scan_id)
         if scan is None:
             raise ScanNotFoundError(scan_id)
