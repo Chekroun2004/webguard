@@ -41,7 +41,7 @@ services:
   worker:
     build:
       context: ./backend
-    command: celery -A app.workers.celery_app worker --loglevel=info
+    command: celery -A app.workers.celery_app worker --loglevel=info --include=app.workers.tasks.scan
     env_file:
       - .env
     depends_on:
