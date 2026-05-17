@@ -36,8 +36,10 @@ async def register_domain(
         record = await service.register(
             user_id=current_user.id, domain=body.domain, method=body.method
         )
-    except DomainAlreadyExistsError:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Domain already registered")
+    except DomainAlreadyExistsError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Domain already registered"
+        ) from exc
     return DomainOut.model_validate(record)
 
 
@@ -60,10 +62,14 @@ async def get_domain(
     service = DomainService(db)
     try:
         record = await service.get_domain(domain_id=domain_id, user_id=current_user.id)
-    except DomainNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found")
-    except DomainForbiddenError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    except DomainNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found"
+        ) from exc
+    except DomainForbiddenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        ) from exc
     return DomainOut.model_validate(record)
 
 
@@ -76,10 +82,16 @@ async def verify_domain(
     service = DomainService(db)
     try:
         record = await service.verify(domain_id=domain_id, user_id=current_user.id)
-    except DomainNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found")
-    except DomainForbiddenError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    except DomainNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found"
+        ) from exc
+    except DomainForbiddenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        ) from exc
     except DomainVerificationError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
     return DomainOut.model_validate(record)

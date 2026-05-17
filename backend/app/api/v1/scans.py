@@ -13,7 +13,6 @@ import asyncio
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
@@ -85,10 +84,14 @@ async def get_scan(
     service = ScanService(db)
     try:
         scan = await service.get_scan(scan_id=scan_id, user_id=current_user.id)
-    except ScanNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found")
-    except ScanForbiddenError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    except ScanNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found"
+        ) from exc
+    except ScanForbiddenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        ) from exc
     return _to_out(scan)
 
 
@@ -101,10 +104,14 @@ async def get_scan_status(
     service = ScanService(db)
     try:
         scan = await service.get_scan(scan_id=scan_id, user_id=current_user.id)
-    except ScanNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found")
-    except ScanForbiddenError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    except ScanNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found"
+        ) from exc
+    except ScanForbiddenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        ) from exc
     return {"id": scan.id, "status": scan.status}
 
 
@@ -119,10 +126,14 @@ async def scan_events(
     service = ScanService(db)
     try:
         await service.get_scan(scan_id=scan_id, user_id=current_user.id)
-    except ScanNotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found")
-    except ScanForbiddenError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    except ScanNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found"
+        ) from exc
+    except ScanForbiddenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        ) from exc
 
     async def event_generator():
         while True:

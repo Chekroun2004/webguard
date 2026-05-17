@@ -11,7 +11,13 @@ extend-exclude = ["alembic/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "N", "ASYNC", "S", "RUF"]
-ignore = ["S101"]
+ignore = [
+    "S101",   # assert used in tests
+    "B008",   # Depends() in default args — standard FastAPI pattern
+    "N806",   # MockX naming in tests
+    "RUF012", # mutable class attribute defaults — intentional in SQLAlchemy scanners
+    "S105",   # hardcoded passwords in settings defaults — dev-only
+]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S"]

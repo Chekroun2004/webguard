@@ -12,6 +12,28 @@ export default [
       ecmaVersion: 2022,
       sourceType: "module",
       parser: tsparser,
+      globals: {
+        // Browser globals
+        window: "readonly",
+        document: "readonly",
+        navigator: "readonly",
+        fetch: "readonly",
+        localStorage: "readonly",
+        sessionStorage: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+        EventSource: "readonly",
+        MessageEvent: "readonly",
+        RequestInit: "readonly",
+        Response: "readonly",
+        // Node globals (vite.config.ts)
+        __dirname: "readonly",
+        process: "readonly",
+        // React JSX transform (no import needed)
+        React: "readonly",
+      },
     },
     plugins: {
       "@typescript-eslint": tseslint,

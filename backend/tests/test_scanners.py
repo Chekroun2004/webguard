@@ -5,11 +5,9 @@ Strategy: mock the internal _fetch method so no real HTTP calls are made.
 Each test verifies that a specific security header misconfiguration or absence
 is correctly detected (or not detected on a clean site).
 """
-import pytest
 from unittest.mock import AsyncMock, patch
 
 from app.scanners.headers import HeadersScanner
-
 
 SAFE_HEADERS = {
     "Content-Security-Policy": "default-src 'self'",
@@ -97,7 +95,8 @@ class TestHeadersScannerMisconfigurations:
 class TestHeadersScannerCleanSite:
     async def test_well_configured_site_has_no_findings(self):
         scanner = HeadersScanner()
-        with patch.object(scanner, "_fetch", new=AsyncMock(return_value=make_response(SAFE_HEADERS))):
+        mock_fetch = AsyncMock(return_value=make_response(SAFE_HEADERS))
+        with patch.object(scanner, "_fetch", new=mock_fetch):
             findings = await scanner.scan("https://example.com", {})
         assert findings == [], f"Expected no findings, got: {findings}"
 
