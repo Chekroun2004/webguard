@@ -4,16 +4,15 @@ Unit tests for the Celery scan task.
 Strategy: call execute_scan() (the async inner function) directly with a test DB session,
 bypassing the Celery broker entirely. This lets us run tasks in-process with SQLite.
 """
-import pytest
+from unittest.mock import AsyncMock, patch
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from unittest.mock import AsyncMock, patch
 
 from app.db.models.scan import Scan, Vulnerability
 from app.db.models.user import User
 from app.scanners.base import Finding
 from app.workers.tasks.scan import execute_scan
-
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -52,8 +51,14 @@ class TestExecuteScan:
         session_factory, scan_id = await _create_pending_scan(engine, "task2@test.com")
 
         findings = [
-            Finding(name="Missing CSP", severity="high", description="No CSP header", recommendation="Add CSP"),
-            Finding(name="Missing HSTS", severity="high", description="No HSTS header", recommendation="Add HSTS"),
+            Finding(
+                name="Missing CSP", severity="high",
+                description="No CSP header", recommendation="Add CSP",
+            ),
+            Finding(
+                name="Missing HSTS", severity="high",
+                description="No HSTS header", recommendation="Add HSTS",
+            ),
         ]
 
         async with session_factory() as session:

@@ -7,8 +7,8 @@ GET  /api/v1/scans/{id}        → scan detail (with findings after task complet
 GET  /api/v1/scans/{id}/status → current status
 GET  /api/v1/scans/{id}/events → SSE stream
 """
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 from httpx import AsyncClient
 
 
@@ -26,7 +26,9 @@ class TestCreateScan:
         assert data["status"] == "pending"
         assert data["findings"] == []
 
-    async def test_dispatches_celery_task_with_scan_id(self, client: AsyncClient, auth_headers: dict):
+    async def test_dispatches_celery_task_with_scan_id(
+        self, client: AsyncClient, auth_headers: dict
+    ):
         with patch("app.api.v1.scans.run_scan_task.delay") as mock_delay:
             resp = await client.post(
                 "/api/v1/scans",
@@ -79,8 +81,9 @@ class TestGetScan:
             )
         scan_id = create.json()["id"]
 
-        await client.post("/api/v1/auth/register", json={"email": "other@example.com", "password": "password123"})
-        login_b = await client.post("/api/v1/auth/login", json={"email": "other@example.com", "password": "password123"})
+        creds = {"email": "other@example.com", "password": "password123"}
+        await client.post("/api/v1/auth/register", json=creds)
+        login_b = await client.post("/api/v1/auth/login", json=creds)
         headers_b = {"Authorization": f"Bearer {login_b.json()['access_token']}"}
 
         resp = await client.get(f"/api/v1/scans/{scan_id}", headers=headers_b)
@@ -104,8 +107,9 @@ class TestListScans:
             await client.post("/api/v1/scans", json={"url": "https://a.com"}, headers=auth_headers)
             await client.post("/api/v1/scans", json={"url": "https://b.com"}, headers=auth_headers)
 
-        await client.post("/api/v1/auth/register", json={"email": "userb@example.com", "password": "password123"})
-        login_b = await client.post("/api/v1/auth/login", json={"email": "userb@example.com", "password": "password123"})
+        creds_b = {"email": "userb@example.com", "password": "password123"}
+        await client.post("/api/v1/auth/register", json=creds_b)
+        login_b = await client.post("/api/v1/auth/login", json=creds_b)
         headers_b = {"Authorization": f"Bearer {login_b.json()['access_token']}"}
         with patch("app.api.v1.scans.run_scan_task.delay"):
             await client.post("/api/v1/scans", json={"url": "https://c.com"}, headers=headers_b)
@@ -160,8 +164,9 @@ class TestScanStatus:
             )
         scan_id = create.json()["id"]
 
-        await client.post("/api/v1/auth/register", json={"email": "other3@example.com", "password": "password123"})
-        login_b = await client.post("/api/v1/auth/login", json={"email": "other3@example.com", "password": "password123"})
+        creds3 = {"email": "other3@example.com", "password": "password123"}
+        await client.post("/api/v1/auth/register", json=creds3)
+        login_b = await client.post("/api/v1/auth/login", json=creds3)
         headers_b = {"Authorization": f"Bearer {login_b.json()['access_token']}"}
 
         resp = await client.get(f"/api/v1/scans/{scan_id}/status", headers=headers_b)

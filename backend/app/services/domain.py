@@ -1,7 +1,7 @@
 """Domain ownership service — verification logic (file & DNS)."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import urlparse
 
 import dns.asyncresolver
@@ -75,7 +75,7 @@ class DomainService:
             await self._verify_dns(record)
 
         record.is_verified = True
-        record.verified_at = datetime.now(timezone.utc)
+        record.verified_at = datetime.now(UTC)
         return record
 
     async def _verify_file(self, record: DomainOwnership) -> None:

@@ -9,8 +9,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
-    from app.db.models.scan import Scan
     from app.db.models.domain import DomainOwnership
+    from app.db.models.scan import Scan
 
 
 class User(Base):
@@ -28,5 +28,9 @@ class User(Base):
         nullable=False,
     )
 
-    scans: Mapped[list["Scan"]] = relationship("Scan", back_populates="user", cascade="all, delete-orphan")
-    domains: Mapped[list["DomainOwnership"]] = relationship("DomainOwnership", back_populates="user", cascade="all, delete-orphan")
+    scans: Mapped[list[Scan]] = relationship(
+        "Scan", back_populates="user", cascade="all, delete-orphan"
+    )
+    domains: Mapped[list[DomainOwnership]] = relationship(
+        "DomainOwnership", back_populates="user", cascade="all, delete-orphan"
+    )
