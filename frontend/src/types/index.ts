@@ -1,3 +1,21 @@
+export type Vulnerability = {
+  id: number;
+  name: string;
+  severity: "info" | "low" | "medium" | "high" | "critical";
+  description: string;
+  recommendation: string;
+  evidence: string;
+};
+
+export type Scan = {
+  id: number;
+  url: string;
+  status: "pending" | "running" | "completed" | "failed";
+  created_at: string;
+  finished_at: string | null;
+  findings: Vulnerability[];
+};
+
 export type User = {
   id: number;
   email: string;
