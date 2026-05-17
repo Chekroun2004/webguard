@@ -172,17 +172,23 @@ Les repositories ne contiennent **aucune** logique métier.
   - `--include=app.workers.tasks.scan` ajouté à la commande worker dans `docker-compose.yml` (tâche non enregistrée)
 - **Bug restant** : la barre de progression SSE ne se termine pas toujours côté frontend — à investiguer en Étape 5 ou en début de session suivante
 
-### 🔲 Étape 5 — Vérification d'ownership de domaine — PROCHAINE ÉTAPE
+### ✅ Étape 5 — Vérification d'ownership de domaine (TERMINÉE)
+- Modèle `DomainOwnership` + migration Alembic `0003_add_domain_ownership_table`
+- Vérification par fichier (`/webguard-verify-{token}.txt`) ou DNS TXT (`_webguard.{domain}`)
+- `DomainService` : `register`, `verify` (file + DNS via `dnspython`)
+- Routes : `POST /domains`, `GET /domains`, `GET /domains/{id}`, `POST /domains/{id}/verify`
+- 20 tests pytest ✅
+- Page frontend `DomainsPage` + `useDomains` hooks
+- **Aussi corrigé** : bug barre progression SSE (fallback polling + reset `activeScanId`)
 
-### 🔲 Étape 5 — Vérification d'ownership de domaine
-- Modèle `DomainOwnership` + migration
-- Vérification par fichier (`/webguard-verify-{token}.txt`) ou DNS TXT
-- Les scans actifs (Phase 2) bloqués sur domaines non vérifiés
-- Page frontend de vérification
-
-### 🔲 Étape 6 — Scanners Phase 1 (passifs)
-- `cookies.py`, `ssl_tls.py`, `sensitive_files.py`, `technologies.py`, `http_methods.py`
-- Tests pour chaque module
+### ✅ Étape 6 — Scanners Phase 1 (passifs) (TERMINÉE)
+- `cookies.py` : Secure, HttpOnly, SameSite, SameSite=None sans Secure
+- `ssl_tls.py` : version TLS obsolète, expiry certificat (30j high / 90j medium), erreur SSL
+- `sensitive_files.py` : 16 chemins sensibles (.git, .env, wp-config.php, etc.)
+- `technologies.py` : Server header avec/sans version, X-Powered-By, X-Aspnet-Version
+- `http_methods.py` : TRACE (high), PUT/DELETE/CONNECT (medium) via OPTIONS
+- `execute_scan` mis à jour pour lancer les 6 scanners en parallèle (`asyncio.gather`)
+- 31 nouveaux tests pytest ✅ (99 total)
 
 ### 🔲 Étape 7 — Crawler + scanners Phase 2 (actifs)
 - `crawler.py` (respect robots.txt, profondeur configurable)
@@ -240,7 +246,7 @@ verification_token, verified_at, is_verified
 
 - Ce fichier doit être mis à jour à chaque étape complétée et quand le contexte de session approche 90%.
 - Spec de design complète : `docs/superpowers/specs/2026-05-17-webguard-design.md`
-- Dernière session : Étapes 1, 2, 3 et 4 complétées + bugs Celery corrigés. Prochaine tâche : **débugger la barre de progression SSE puis Étape 5**.
+- Dernière session : Étapes 5 et 6 complétées. 99/99 tests ✅. Prochaine tâche : **Étape 7 — Crawler + scanners Phase 2 (actifs)**.
 - Note Celery task testing : appeler `execute_scan(scan_id, session)` directement, ne pas passer par le broker.
 - Piège Celery : utiliser `@celery_app.task` (pas `@shared_task`) et importer `app.workers.celery_app` dans `main.py`. Le worker doit démarrer avec `--include=app.workers.tasks.scan`.
 - Piège EventSource : ne supporte pas les headers custom → le token JWT est passé en `?token=` query param (voir `deps.py` et `useScanEvents.ts`).
