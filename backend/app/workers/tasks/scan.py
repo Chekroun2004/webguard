@@ -8,11 +8,11 @@ Architecture:
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.scan import Scan, Vulnerability
+from app.db.models.scan import Vulnerability
 from app.repositories.scan import get_scan_by_id
 from app.scanners.headers import HeadersScanner
 from app.workers.celery_app import celery_app
@@ -51,11 +51,11 @@ async def execute_scan(scan_id: int, session: AsyncSession) -> None:
             )
 
         scan.status = "completed"
-        scan.finished_at = datetime.now(timezone.utc)
+        scan.finished_at = datetime.now(UTC)
 
     except Exception:
         scan.status = "failed"
-        scan.finished_at = datetime.now(timezone.utc)
+        scan.finished_at = datetime.now(UTC)
 
 
 @celery_app.task(name="run_scan_task")

@@ -4,10 +4,8 @@ Pydantic v2 schemas for Scan and Vulnerability.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated
 
 from pydantic import AnyHttpUrl, BaseModel, Field
-
 
 # ── Request ──────────────────────────────────────────────────────────────────
 
