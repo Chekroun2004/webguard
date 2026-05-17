@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LogOut, ShieldCheck, Loader2 } from "lucide-react";
 
 import { useCurrentUser, useLogout } from "@/hooks/useAuth";
@@ -20,6 +20,15 @@ function ScanForm() {
   // Subscribe to SSE for the currently running scan
   const liveStatus = useScanEvents(activeScanId);
 
+  // Clear the active scan a moment after it reaches a terminal state so the
+  // hook resets and the form is no longer blocked by stale status.
+  useEffect(() => {
+    if (liveStatus === "completed" || liveStatus === "failed") {
+      const timer = setTimeout(() => setActiveScanId(null), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [liveStatus]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -32,11 +41,7 @@ function ScanForm() {
     }
   };
 
-  // Clear active scan once it finishes
   const displayStatus = liveStatus;
-  if (liveStatus === "completed" || liveStatus === "failed") {
-    // Keep bar visible briefly, then clear on next form submit
-  }
 
   return (
     <div className="rounded-lg border bg-card p-6 space-y-4">
