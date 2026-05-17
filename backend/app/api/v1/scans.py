@@ -19,7 +19,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from app.api.deps import get_current_user
 from app.db.models.user import User
-from app.db.session import get_db
+from app.db.session import AsyncSessionLocal, get_db
 from app.repositories.scan import get_scan_by_id
 from app.schemas.scan import ScanCreate, ScanOut, VulnerabilityOut
 from app.services.scan import ScanForbiddenError, ScanNotFoundError, ScanService
@@ -125,8 +125,6 @@ async def scan_events(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     async def event_generator():
-        from app.db.session import AsyncSessionLocal
-
         while True:
             async with AsyncSessionLocal() as fresh_db:
                 scan = await get_scan_by_id(fresh_db, scan_id)

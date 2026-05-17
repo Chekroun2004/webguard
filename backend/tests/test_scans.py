@@ -178,9 +178,28 @@ class TestScanSSE:
             )
         scan_id = create.json()["id"]
 
-        async with client.stream("GET", f"/api/v1/scans/{scan_id}/events", headers=auth_headers) as resp:
-            assert resp.status_code == 200
-            assert "text/event-stream" in resp.headers["content-type"]
+        # The event generator uses AsyncSessionLocal (module-level) to open
+        # fresh DB sessions, bypassing the test's dependency override.
+        # Stub it out so the generator returns a completed scan immediately.
+        mock_scan = MagicMock()
+        mock_scan.id = scan_id
+        mock_scan.status = "completed"
+
+        mock_session = AsyncMock()
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_cm.__aexit__ = AsyncMock(return_value=None)
+        mock_session_local = MagicMock(return_value=mock_cm)
+
+        with (
+            patch("app.api.v1.scans.AsyncSessionLocal", mock_session_local),
+            patch("app.api.v1.scans.get_scan_by_id", AsyncMock(return_value=mock_scan)),
+        ):
+            async with client.stream(
+                "GET", f"/api/v1/scans/{scan_id}/events", headers=auth_headers
+            ) as resp:
+                assert resp.status_code == 200
+                assert "text/event-stream" in resp.headers["content-type"]
 
     async def test_sse_requires_auth(self, client: AsyncClient, auth_headers: dict):
         with patch("app.api.v1.scans.run_scan_task.delay"):
