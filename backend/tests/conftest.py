@@ -2,7 +2,7 @@
 Pytest configuration — test database (SQLite in-memory) + HTTP client.
 
 Each test function gets:
-- A fresh in-memory SQLite database (tables created from SQLAlchemy models).
+- A fresh in-memory SQLite database (all models registered via app.db.models import).
 - A FastAPI AsyncClient wired to that database via dependency override.
 """
 import pytest
@@ -15,10 +15,10 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.pool import StaticPool
 
 from app.db.base import Base
+import app.db.models  # noqa: F401 — registers User, Scan, Vulnerability with Base.metadata
 from app.db.session import get_db
 from app.main import app
 
-# StaticPool ensures all async connections share the same in-memory SQLite db.
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 
@@ -54,3 +54,17 @@ async def client(engine):
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(scope="function")
+async def auth_headers(client: AsyncClient) -> dict[str, str]:
+    """Register a test user and return Bearer auth headers."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": "tester@example.com", "password": "password123"},
+    )
+    resp = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "tester@example.com", "password": "password123"},
+    )
+    return {"Authorization": f"Bearer {resp.json()['access_token']}"}
