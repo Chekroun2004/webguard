@@ -1,63 +1,40 @@
 """
-Integration tests for POST /api/v1/scans and GET /api/v1/scans/{id}.
+Integration tests for scan routes — async version (Étape 4).
 
-Strategy: mock HeadersScanner._fetch so no real HTTP calls happen during tests.
-All scan operations run synchronously (no Celery yet — that's Étape 4).
+POST /api/v1/scans  → 202, status=pending, task dispatched
+GET  /api/v1/scans  → list user's scans
+GET  /api/v1/scans/{id}        → scan detail (with findings after task completes)
+GET  /api/v1/scans/{id}/status → current status
+GET  /api/v1/scans/{id}/events → SSE stream
 """
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, MagicMock
 from httpx import AsyncClient
 
 
-SAFE_HEADERS = {
-    "Content-Security-Policy": "default-src 'self'",
-    "Strict-Transport-Security": "max-age=63072000; includeSubDomains",
-    "X-Frame-Options": "DENY",
-    "X-Content-Type-Options": "nosniff",
-    "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "geolocation=(), microphone=()",
-}
-
-RISKY_HEADERS = {
-    "X-Frame-Options": "DENY",
-    "X-Content-Type-Options": "nosniff",
-    # Missing CSP, HSTS, Referrer-Policy → should generate findings
-}
-
-MOCK_FETCH_SAFE = AsyncMock(return_value={"status": 200, "headers": SAFE_HEADERS, "body": ""})
-MOCK_FETCH_RISKY = AsyncMock(return_value={"status": 200, "headers": RISKY_HEADERS, "body": ""})
-
-
 class TestCreateScan:
-    async def test_returns_201_with_scan_id(self, client: AsyncClient, auth_headers: dict):
-        with patch("app.scanners.headers.HeadersScanner._fetch", new=MOCK_FETCH_SAFE):
+    async def test_returns_202_with_pending_status(self, client: AsyncClient, auth_headers: dict):
+        with patch("app.api.v1.scans.run_scan_task.delay"):
             resp = await client.post(
                 "/api/v1/scans",
                 json={"url": "https://example.com"},
                 headers=auth_headers,
             )
-        assert resp.status_code == 201
+        assert resp.status_code == 202
         data = resp.json()
         assert "id" in data
-        # Pydantic AnyHttpUrl normalises to trailing slash
-        assert data["url"].rstrip("/") == "https://example.com"
-        assert data["status"] == "completed"
+        assert data["status"] == "pending"
+        assert data["findings"] == []
 
-    async def test_returns_findings_list(self, client: AsyncClient, auth_headers: dict):
-        with patch("app.scanners.headers.HeadersScanner._fetch", new=MOCK_FETCH_RISKY):
+    async def test_dispatches_celery_task_with_scan_id(self, client: AsyncClient, auth_headers: dict):
+        with patch("app.api.v1.scans.run_scan_task.delay") as mock_delay:
             resp = await client.post(
                 "/api/v1/scans",
-                json={"url": "https://insecure.example.com"},
+                json={"url": "https://example.com"},
                 headers=auth_headers,
             )
-        assert resp.status_code == 201
-        data = resp.json()
-        assert isinstance(data["findings"], list)
-        assert len(data["findings"]) > 0
-        finding = data["findings"][0]
-        assert "name" in finding
-        assert "severity" in finding
-        assert "description" in finding
+        scan_id = resp.json()["id"]
+        mock_delay.assert_called_once_with(scan_id)
 
     async def test_requires_auth(self, client: AsyncClient):
         resp = await client.post(
@@ -67,27 +44,18 @@ class TestCreateScan:
         assert resp.status_code == 401
 
     async def test_rejects_invalid_url(self, client: AsyncClient, auth_headers: dict):
-        resp = await client.post(
-            "/api/v1/scans",
-            json={"url": "not-a-url"},
-            headers=auth_headers,
-        )
-        assert resp.status_code == 422
-
-    async def test_clean_site_has_zero_findings(self, client: AsyncClient, auth_headers: dict):
-        with patch("app.scanners.headers.HeadersScanner._fetch", new=MOCK_FETCH_SAFE):
+        with patch("app.api.v1.scans.run_scan_task.delay"):
             resp = await client.post(
                 "/api/v1/scans",
-                json={"url": "https://secure.example.com"},
+                json={"url": "not-a-url"},
                 headers=auth_headers,
             )
-        assert resp.status_code == 201
-        assert resp.json()["findings"] == []
+        assert resp.status_code == 422
 
 
 class TestGetScan:
     async def test_returns_scan_by_id(self, client: AsyncClient, auth_headers: dict):
-        with patch("app.scanners.headers.HeadersScanner._fetch", new=MOCK_FETCH_SAFE):
+        with patch("app.api.v1.scans.run_scan_task.delay"):
             create = await client.post(
                 "/api/v1/scans",
                 json={"url": "https://example.com"},
@@ -103,8 +71,7 @@ class TestGetScan:
         assert resp.status_code == 404
 
     async def test_returns_403_for_other_users_scan(self, client: AsyncClient, auth_headers: dict):
-        # Create scan with user A
-        with patch("app.scanners.headers.HeadersScanner._fetch", new=MOCK_FETCH_SAFE):
+        with patch("app.api.v1.scans.run_scan_task.delay"):
             create = await client.post(
                 "/api/v1/scans",
                 json={"url": "https://example.com"},
@@ -112,22 +79,15 @@ class TestGetScan:
             )
         scan_id = create.json()["id"]
 
-        # Register and login user B
-        await client.post(
-            "/api/v1/auth/register",
-            json={"email": "other@example.com", "password": "password123"},
-        )
-        login_b = await client.post(
-            "/api/v1/auth/login",
-            json={"email": "other@example.com", "password": "password123"},
-        )
+        await client.post("/api/v1/auth/register", json={"email": "other@example.com", "password": "password123"})
+        login_b = await client.post("/api/v1/auth/login", json={"email": "other@example.com", "password": "password123"})
         headers_b = {"Authorization": f"Bearer {login_b.json()['access_token']}"}
 
         resp = await client.get(f"/api/v1/scans/{scan_id}", headers=headers_b)
         assert resp.status_code == 403
 
     async def test_requires_auth_for_get(self, client: AsyncClient, auth_headers: dict):
-        with patch("app.scanners.headers.HeadersScanner._fetch", new=MOCK_FETCH_SAFE):
+        with patch("app.api.v1.scans.run_scan_task.delay"):
             create = await client.post(
                 "/api/v1/scans",
                 json={"url": "https://example.com"},
@@ -140,19 +100,16 @@ class TestGetScan:
 
 class TestListScans:
     async def test_user_sees_only_their_scans(self, client: AsyncClient, auth_headers: dict):
-        # Create 2 scans for user A
-        with patch("app.scanners.headers.HeadersScanner._fetch", new=MOCK_FETCH_SAFE):
+        with patch("app.api.v1.scans.run_scan_task.delay"):
             await client.post("/api/v1/scans", json={"url": "https://a.com"}, headers=auth_headers)
             await client.post("/api/v1/scans", json={"url": "https://b.com"}, headers=auth_headers)
 
-        # Create 1 scan for user B
         await client.post("/api/v1/auth/register", json={"email": "userb@example.com", "password": "password123"})
         login_b = await client.post("/api/v1/auth/login", json={"email": "userb@example.com", "password": "password123"})
         headers_b = {"Authorization": f"Bearer {login_b.json()['access_token']}"}
-        with patch("app.scanners.headers.HeadersScanner._fetch", new=MOCK_FETCH_SAFE):
+        with patch("app.api.v1.scans.run_scan_task.delay"):
             await client.post("/api/v1/scans", json={"url": "https://c.com"}, headers=headers_b)
 
-        # User A should only see their 2 scans
         resp = await client.get("/api/v1/scans", headers=auth_headers)
         assert resp.status_code == 200
         scans = resp.json()
@@ -162,4 +119,76 @@ class TestListScans:
 
     async def test_list_requires_auth(self, client: AsyncClient):
         resp = await client.get("/api/v1/scans")
+        assert resp.status_code == 401
+
+
+class TestScanStatus:
+    async def test_returns_current_status(self, client: AsyncClient, auth_headers: dict):
+        with patch("app.api.v1.scans.run_scan_task.delay"):
+            create = await client.post(
+                "/api/v1/scans",
+                json={"url": "https://example.com"},
+                headers=auth_headers,
+            )
+        scan_id = create.json()["id"]
+
+        resp = await client.get(f"/api/v1/scans/{scan_id}/status", headers=auth_headers)
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "pending"
+
+    async def test_requires_auth(self, client: AsyncClient, auth_headers: dict):
+        with patch("app.api.v1.scans.run_scan_task.delay"):
+            create = await client.post(
+                "/api/v1/scans",
+                json={"url": "https://example.com"},
+                headers=auth_headers,
+            )
+        scan_id = create.json()["id"]
+        resp = await client.get(f"/api/v1/scans/{scan_id}/status")
+        assert resp.status_code == 401
+
+    async def test_returns_404_for_unknown_scan(self, client: AsyncClient, auth_headers: dict):
+        resp = await client.get("/api/v1/scans/99999/status", headers=auth_headers)
+        assert resp.status_code == 404
+
+    async def test_returns_403_for_other_users_scan(self, client: AsyncClient, auth_headers: dict):
+        with patch("app.api.v1.scans.run_scan_task.delay"):
+            create = await client.post(
+                "/api/v1/scans",
+                json={"url": "https://example.com"},
+                headers=auth_headers,
+            )
+        scan_id = create.json()["id"]
+
+        await client.post("/api/v1/auth/register", json={"email": "other3@example.com", "password": "password123"})
+        login_b = await client.post("/api/v1/auth/login", json={"email": "other3@example.com", "password": "password123"})
+        headers_b = {"Authorization": f"Bearer {login_b.json()['access_token']}"}
+
+        resp = await client.get(f"/api/v1/scans/{scan_id}/status", headers=headers_b)
+        assert resp.status_code == 403
+
+
+class TestScanSSE:
+    async def test_sse_endpoint_returns_event_stream(self, client: AsyncClient, auth_headers: dict):
+        with patch("app.api.v1.scans.run_scan_task.delay"):
+            create = await client.post(
+                "/api/v1/scans",
+                json={"url": "https://example.com"},
+                headers=auth_headers,
+            )
+        scan_id = create.json()["id"]
+
+        async with client.stream("GET", f"/api/v1/scans/{scan_id}/events", headers=auth_headers) as resp:
+            assert resp.status_code == 200
+            assert "text/event-stream" in resp.headers["content-type"]
+
+    async def test_sse_requires_auth(self, client: AsyncClient, auth_headers: dict):
+        with patch("app.api.v1.scans.run_scan_task.delay"):
+            create = await client.post(
+                "/api/v1/scans",
+                json={"url": "https://example.com"},
+                headers=auth_headers,
+            )
+        scan_id = create.json()["id"]
+        resp = await client.get(f"/api/v1/scans/{scan_id}/events")
         assert resp.status_code == 401
