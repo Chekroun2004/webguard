@@ -47,6 +47,7 @@ backend/celerybeat-schedule
 
 # Fichier de config Claude Code (local uniquement)
 CLAUDE.md
+docs/superpowers/
 
 # Playwright
 frontend/test-results/
