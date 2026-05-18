@@ -238,6 +238,12 @@ export function DashboardPage() {
             >
               Mes domaines
             </Link>
+            <Link
+              to="/scheduled"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Scans planifiés
+            </Link>
             <ThemeToggle />
             <button
               onClick={logout}

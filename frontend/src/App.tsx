@@ -7,6 +7,7 @@ import { DomainsPage } from "@/pages/DomainsPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { ScanDetailPage } from "@/pages/ScanDetailPage";
+import { ScheduledScansPage } from "@/pages/ScheduledScansPage";
 
 function App() {
   return (
@@ -30,6 +31,14 @@ function App() {
         }
       />
       <Route
+        path="/scheduled"
+        element={
+          <ProtectedRoute>
+            <ScheduledScansPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/scans/:id"
         element={
           <ProtectedRoute>
@@ -45,7 +54,6 @@ function App() {
           </ProtectedRoute>
         }
       />
-      {/* Root → dashboard (ProtectedRoute redirige vers /login si non connecté) */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
