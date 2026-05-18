@@ -105,3 +105,17 @@ def disable_rate_limiting():
     limiter.enabled = False
     yield
     limiter.enabled = original
+
+
+@pytest.fixture(autouse=True)
+def mock_email_send(monkeypatch):
+    """Mock aiosmtplib.send so tests never try to hit a real SMTP server.
+
+    Tests that specifically verify email behavior should re-mock locally.
+    """
+    import aiosmtplib
+
+    async def _noop(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(aiosmtplib, "send", _noop)

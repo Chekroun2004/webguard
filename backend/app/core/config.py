@@ -30,6 +30,14 @@ class Settings(BaseSettings):
     # which breaks plain URLs. We keep it as str and expose a property instead.
     backend_cors_origins: str = "http://localhost:5173"
 
+    # Email (SMTP)
+    smtp_host: str = "mailpit"
+    smtp_port: int = 1025
+    smtp_use_tls: bool = False
+    from_email: str = "webguard@localhost"
+    frontend_url: str = "http://localhost:5173"
+    email_notifications_enabled: bool = True
+
     @property
     def cors_origins(self) -> list[str]:
         """Return CORS origins as a list (comma-separated in env var)."""

@@ -55,6 +55,25 @@ ACTIVE_SCANNERS = [
 SCANNERS = PASSIVE_SCANNERS
 
 
+async def _notify_scan_complete(session: AsyncSession, scan) -> None:
+    """Best-effort email notification — never raises."""
+    from sqlalchemy import select
+
+    from app.db.models.user import User
+    from app.services.email import send_scan_complete_email
+
+    try:
+        result = await session.execute(select(User).where(User.id == scan.user_id))
+        user = result.scalar_one_or_none()
+        if user is None:
+            return
+        findings = list(scan.vulnerabilities)
+        await send_scan_complete_email(user.email, user.full_name, scan, findings)
+    except Exception:  # noqa: BLE001
+        # Logging happens in the email service; swallow anything here too
+        pass
+
+
 async def execute_scan(scan_id: int, session: AsyncSession) -> None:
     """
     Core async logic: run all scanners for the given scan and persist findings.
@@ -116,6 +135,10 @@ async def execute_scan(scan_id: int, session: AsyncSession) -> None:
     except Exception:
         scan.status = "failed"
         scan.finished_at = datetime.now(UTC)
+
+    # Flush so vulnerabilities are visible on `scan.vulnerabilities` before notifying
+    await session.flush()
+    await _notify_scan_complete(session, scan)
 
 
 @celery_app.task(name="run_scan_task")
