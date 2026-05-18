@@ -2,10 +2,12 @@
 
 Scanner de vulnérabilités web — projet portfolio Master IGOV, FSR-UM5 Rabat.
 
+[![CI](https://github.com/Chekroun2004/webguard/actions/workflows/ci.yml/badge.svg)](https://github.com/Chekroun2004/webguard/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
-![Tests](https://img.shields.io/badge/tests-150%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-161%20passing-brightgreen)
+![Deploy](https://img.shields.io/badge/deploy-Fly.io-7B3FE4?logo=fly.io)
 
 L'utilisateur soumet une URL → le système scanne → génère un rapport PDF/JSON avec sévérités et recommandations.
 
@@ -20,6 +22,8 @@ L'utilisateur soumet une URL → le système scanne → génère un rapport PDF/
 - **Vérification d'ownership** de domaine (fichier ou DNS TXT)
 - **Rate limiting** : 5 scans/heure par utilisateur, 100 req/min global
 - **Récupération automatique** des scans bloqués au redémarrage
+- **Comparaison de scans** : page dédiée `/diff` qui met en évidence les vulnérabilités ajoutées/corrigées entre deux scans d'un même domaine
+- **Notifications email** : envoi automatique d'un rapport résumé à la fin de chaque scan (Mailpit en dev, SMTP en prod)
 
 ---
 
@@ -62,6 +66,7 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 | Frontend | http://localhost:5173 |
 | API | http://localhost:8000 |
 | Swagger | http://localhost:8000/docs |
+| Mailpit (emails) | http://localhost:8025 |
 
 ---
 
@@ -104,12 +109,20 @@ Routes (app/api/v1/)
 ## Tests
 
 ```bash
-# Backend — 150 tests (SQLite in-memory, sans Postgres)
+# Backend — 161 tests (SQLite in-memory, sans Postgres)
 docker compose exec backend pytest -v
 
 # Avec couverture
 docker compose exec backend pytest --cov=app --cov-report=term-missing
+
+# Frontend E2E (Playwright, nécessite la stack docker compose lancée)
+cd frontend
+npm ci
+npx playwright install chromium  # une seule fois
+npm run test:e2e
 ```
+
+CI automatisée via GitHub Actions à chaque push/PR sur `main` (pytest + ruff + black + eslint + tsc).
 
 ---
 
@@ -135,6 +148,12 @@ scan/
 │       └── components/      # SeverityBadge, ScanProgressBar
 └── docker-compose.yml
 ```
+
+---
+
+## Déploiement
+
+Configs prêtes pour Fly.io (3 apps : API, Worker, Frontend). Voir [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) pour le guide pas à pas (création des managed services Postgres + Redis, secrets, `flyctl deploy`).
 
 ---
 
