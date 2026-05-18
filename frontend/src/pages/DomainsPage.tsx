@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Clock, Loader2, ShieldCheck } from "lucide-react";
 
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useDomainList, useRegisterDomain, useVerifyDomain, type VerificationMethod } from "@/hooks/useDomains";
 import { ApiError } from "@/lib/api";
 import type { Domain } from "@/hooks/useDomains";
@@ -146,11 +147,14 @@ export function DomainsPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
-        <div className="container flex h-14 items-center gap-4">
-          <ShieldCheck className="h-5 w-5 text-primary" />
-          <span className="font-semibold"><span className="text-[#6366f1]">Web</span>Guard</span>
-          <span className="text-muted-foreground">/</span>
-          <span className="text-sm">Mes domaines</span>
+        <div className="container flex h-14 items-center justify-between">
+          <div className="flex items-center gap-4">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <span className="font-semibold"><span className="text-[#6366f1]">Web</span>Guard</span>
+            <span className="text-muted-foreground">/</span>
+            <span className="text-sm">Mes domaines</span>
+          </div>
+          <ThemeToggle />
         </div>
       </header>
 

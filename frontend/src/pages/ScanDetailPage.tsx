@@ -11,6 +11,7 @@ import {
 } from "recharts";
 
 import { SeverityBadge } from "@/components/SeverityBadge";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useScan } from "@/hooks/useScan";
 import { tokenStorage } from "@/lib/auth";
 import type { Vulnerability } from "@/types";
@@ -189,13 +190,16 @@ export function ScanDetailPage() {
             <ShieldCheck className="h-5 w-5 text-primary" />
             <span className="font-semibold"><span className="text-[#6366f1]">Web</span>Guard</span>
           </div>
-          <Link
-            to="/dashboard"
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Tableau de bord
-          </Link>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Link
+              to="/dashboard"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Tableau de bord
+            </Link>
+          </div>
         </div>
       </header>
 

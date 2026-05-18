@@ -21,12 +21,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.scan import Vulnerability
 from app.repositories.scan import get_scan_by_id
 from app.scanners.cookies import CookiesScanner
+from app.scanners.cors import CorsScanner
 from app.scanners.crawler import Crawler
 from app.scanners.csrf import CsrfScanner
 from app.scanners.directory_listing import DirectoryListingScanner
 from app.scanners.headers import HeadersScanner
 from app.scanners.http_methods import HttpMethodsScanner
 from app.scanners.open_redirect import OpenRedirectScanner
+from app.scanners.security_txt import SecurityTxtScanner
 from app.scanners.sensitive_files import SensitiveFilesScanner
 from app.scanners.sqli import SqliScanner
 from app.scanners.ssl_tls import SslTlsScanner
@@ -41,6 +43,8 @@ PASSIVE_SCANNERS = [
     SensitiveFilesScanner,
     TechnologiesScanner,
     HttpMethodsScanner,
+    CorsScanner,
+    SecurityTxtScanner,
 ]
 
 ACTIVE_SCANNERS = [

@@ -6,13 +6,16 @@
 const ACCESS_KEY = "wg_access";
 const REFRESH_KEY = "wg_refresh";
 
+function persist(access: string, refresh: string): void {
+  localStorage.setItem(ACCESS_KEY, access);
+  localStorage.setItem(REFRESH_KEY, refresh);
+}
+
 export const tokenStorage = {
   getAccess: (): string | null => localStorage.getItem(ACCESS_KEY),
   getRefresh: (): string | null => localStorage.getItem(REFRESH_KEY),
-  set: (access: string, refresh: string): void => {
-    localStorage.setItem(ACCESS_KEY, access);
-    localStorage.setItem(REFRESH_KEY, refresh);
-  },
+  set: persist,
+  setTokens: persist,
   clear: (): void => {
     localStorage.removeItem(ACCESS_KEY);
     localStorage.removeItem(REFRESH_KEY);

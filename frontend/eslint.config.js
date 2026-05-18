@@ -31,6 +31,9 @@ export default [
         URL: "readonly",
         Blob: "readonly",
         HTMLAnchorElement: "readonly",
+        HTMLElement: "readonly",
+        HTMLButtonElement: "readonly",
+        MediaQueryListEvent: "readonly",
         // Node globals (vite.config.ts)
         __dirname: "readonly",
         process: "readonly",

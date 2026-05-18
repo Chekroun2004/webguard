@@ -7,6 +7,7 @@ import { useCreateScan, useScanList } from "@/hooks/useScan";
 import { useScanEvents } from "@/hooks/useScanEvents";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { ScanProgressBar } from "@/components/ScanProgressBar";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { ApiError } from "@/lib/api";
 import type { Scan } from "@/types";
 
@@ -237,6 +238,7 @@ export function DashboardPage() {
             >
               Mes domaines
             </Link>
+            <ThemeToggle />
             <button
               onClick={logout}
               className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"

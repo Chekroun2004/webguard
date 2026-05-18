@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, GitCompare, Loader2, ShieldCheck } from "lucide-react";
 
 import { SeverityBadge } from "@/components/SeverityBadge";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useScanList } from "@/hooks/useScan";
 import { useScanDiff } from "@/hooks/useScanDiff";
 import type { Scan, Vulnerability } from "@/types";
@@ -80,13 +81,16 @@ export function DiffPage() {
             <span className="text-muted-foreground">/</span>
             <span className="text-sm">Comparer des scans</span>
           </div>
-          <Link
-            to="/dashboard"
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Tableau de bord
-          </Link>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Link
+              to="/dashboard"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Tableau de bord
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -170,15 +174,21 @@ export function DiffPage() {
         {diff && (
           <>
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-lg border bg-red-50 p-4 text-center">
-                <p className="text-2xl font-bold text-red-700">{diff.added.length}</p>
-                <p className="text-xs text-red-600 uppercase tracking-wide mt-1">
+              <div className="rounded-lg border bg-red-50 dark:bg-red-950/40 p-4 text-center">
+                <p className="text-2xl font-bold text-red-700 dark:text-red-300">
+                  {diff.added.length}
+                </p>
+                <p className="text-xs text-red-600 dark:text-red-400 uppercase tracking-wide mt-1">
                   Nouvelles vulnérabilités
                 </p>
               </div>
-              <div className="rounded-lg border bg-green-50 p-4 text-center">
-                <p className="text-2xl font-bold text-green-700">{diff.removed.length}</p>
-                <p className="text-xs text-green-600 uppercase tracking-wide mt-1">Corrigées</p>
+              <div className="rounded-lg border bg-green-50 dark:bg-green-950/40 p-4 text-center">
+                <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                  {diff.removed.length}
+                </p>
+                <p className="text-xs text-green-600 dark:text-green-400 uppercase tracking-wide mt-1">
+                  Corrigées
+                </p>
               </div>
               <div className="rounded-lg border bg-muted p-4 text-center">
                 <p className="text-2xl font-bold text-foreground">{diff.unchanged.length}</p>
@@ -190,7 +200,7 @@ export function DiffPage() {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <h2 className="font-semibold text-sm mb-2 text-red-700">
+                <h2 className="font-semibold text-sm mb-2 text-red-700 dark:text-red-400">
                   Nouvelles vulnérabilités ({diff.added.length})
                 </h2>
                 <VulnList
@@ -199,7 +209,7 @@ export function DiffPage() {
                 />
               </div>
               <div>
-                <h2 className="font-semibold text-sm mb-2 text-green-700">
+                <h2 className="font-semibold text-sm mb-2 text-green-700 dark:text-green-400">
                   Vulnérabilités corrigées ({diff.removed.length})
                 </h2>
                 <VulnList items={diff.removed} emptyMessage="Aucune correction détectée." />
