@@ -15,6 +15,7 @@ STUCK_THRESHOLD_MINUTES = 10
 
 async def _watchdog_async(session: AsyncSession) -> None:
     cutoff = datetime.now(UTC) - timedelta(minutes=STUCK_THRESHOLD_MINUTES)
+    # TODO: use a started_at column once it exists; created_at is the best proxy for now
     result = await session.execute(
         select(Scan).where(
             Scan.status.in_(["pending", "running"]),
