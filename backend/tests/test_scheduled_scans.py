@@ -31,9 +31,7 @@ def _file_mock(token: str):
 async def _create_verified_domain(client: AsyncClient, headers: dict, domain: str) -> None:
     """Helper: register a domain and mark it as verified via mocked file-check."""
     created = (
-        await client.post(
-            DOMAINS, json={"domain": domain, "method": "file"}, headers=headers
-        )
+        await client.post(DOMAINS, json={"domain": domain, "method": "file"}, headers=headers)
     ).json()
     token = created["verification_token"]
     mock_cm, _ = _file_mock(token)
@@ -68,13 +66,9 @@ class TestScheduledCreate:
         )
         assert resp.status_code == 422
 
-    async def test_rejects_unverified_domain(
-        self, client: AsyncClient, auth_headers: dict
-    ):
+    async def test_rejects_unverified_domain(self, client: AsyncClient, auth_headers: dict):
         # Register the domain but DO NOT verify it
-        await client.post(
-            DOMAINS, json={"domain": "unverified.com"}, headers=auth_headers
-        )
+        await client.post(DOMAINS, json={"domain": "unverified.com"}, headers=auth_headers)
         resp = await client.post(
             URL,
             json={"url": "https://unverified.com", "cron_expression": "0 9 * * *"},
@@ -82,9 +76,7 @@ class TestScheduledCreate:
         )
         assert resp.status_code == 403
 
-    async def test_rejects_no_domain_registered(
-        self, client: AsyncClient, auth_headers: dict
-    ):
+    async def test_rejects_no_domain_registered(self, client: AsyncClient, auth_headers: dict):
         resp = await client.post(
             URL,
             json={"url": "https://nothing-here.com", "cron_expression": "0 9 * * *"},
@@ -104,9 +96,7 @@ async def _login_user_b(client: AsyncClient) -> dict:
 
 
 class TestScheduledList:
-    async def test_list_returns_user_schedules(
-        self, client: AsyncClient, auth_headers: dict
-    ):
+    async def test_list_returns_user_schedules(self, client: AsyncClient, auth_headers: dict):
         await _create_verified_domain(client, auth_headers, "example.com")
         await client.post(
             URL,
@@ -119,9 +109,7 @@ class TestScheduledList:
         assert len(body) == 1
         assert body[0]["url"] == "https://example.com"
 
-    async def test_list_returns_only_owned(
-        self, client: AsyncClient, auth_headers: dict
-    ):
+    async def test_list_returns_only_owned(self, client: AsyncClient, auth_headers: dict):
         await _create_verified_domain(client, auth_headers, "example.com")
         await client.post(
             URL,
@@ -135,15 +123,11 @@ class TestScheduledList:
 
 
 class TestScheduledGet:
-    async def test_returns_404_for_unknown(
-        self, client: AsyncClient, auth_headers: dict
-    ):
+    async def test_returns_404_for_unknown(self, client: AsyncClient, auth_headers: dict):
         resp = await client.get(f"{URL}/99999", headers=auth_headers)
         assert resp.status_code == 404
 
-    async def test_returns_403_for_other_user(
-        self, client: AsyncClient, auth_headers: dict
-    ):
+    async def test_returns_403_for_other_user(self, client: AsyncClient, auth_headers: dict):
         await _create_verified_domain(client, auth_headers, "example.com")
         created = (
             await client.post(
@@ -158,9 +142,7 @@ class TestScheduledGet:
 
 
 class TestScheduledUpdate:
-    async def test_patch_recomputes_next_run_at(
-        self, client: AsyncClient, auth_headers: dict
-    ):
+    async def test_patch_recomputes_next_run_at(self, client: AsyncClient, auth_headers: dict):
         await _create_verified_domain(client, auth_headers, "example.com")
         created = (
             await client.post(
@@ -181,9 +163,7 @@ class TestScheduledUpdate:
         assert data["cron_expression"] == "0 12 * * *"
         assert data["next_run_at"] != original_next
 
-    async def test_patch_toggle_is_active(
-        self, client: AsyncClient, auth_headers: dict
-    ):
+    async def test_patch_toggle_is_active(self, client: AsyncClient, auth_headers: dict):
         await _create_verified_domain(client, auth_headers, "example.com")
         created = (
             await client.post(
@@ -200,9 +180,7 @@ class TestScheduledUpdate:
         assert resp.status_code == 200
         assert resp.json()["is_active"] is False
 
-    async def test_patch_invalid_cron_returns_422(
-        self, client: AsyncClient, auth_headers: dict
-    ):
+    async def test_patch_invalid_cron_returns_422(self, client: AsyncClient, auth_headers: dict):
         await _create_verified_domain(client, auth_headers, "example.com")
         created = (
             await client.post(
@@ -218,9 +196,7 @@ class TestScheduledUpdate:
         )
         assert resp.status_code == 422
 
-    async def test_patch_403_for_other_user(
-        self, client: AsyncClient, auth_headers: dict
-    ):
+    async def test_patch_403_for_other_user(self, client: AsyncClient, auth_headers: dict):
         await _create_verified_domain(client, auth_headers, "example.com")
         created = (
             await client.post(
@@ -254,9 +230,7 @@ class TestScheduledDelete:
         get_resp = await client.get(f"{URL}/{created['id']}", headers=auth_headers)
         assert get_resp.status_code == 404
 
-    async def test_delete_403_for_other_user(
-        self, client: AsyncClient, auth_headers: dict
-    ):
+    async def test_delete_403_for_other_user(self, client: AsyncClient, auth_headers: dict):
         await _create_verified_domain(client, auth_headers, "example.com")
         created = (
             await client.post(

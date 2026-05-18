@@ -117,9 +117,7 @@ class ScheduledScanService:
             if not croniter.is_valid(cron_expression):
                 raise InvalidCronError(cron_expression)
             record.cron_expression = cron_expression
-            record.next_run_at = croniter(
-                cron_expression, datetime.now(UTC)
-            ).get_next(datetime)
+            record.next_run_at = croniter(cron_expression, datetime.now(UTC)).get_next(datetime)
         if is_active is not None:
             record.is_active = is_active
         await self._db.flush()

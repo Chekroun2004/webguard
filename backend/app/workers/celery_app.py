@@ -20,6 +20,10 @@ celery_app.conf.update(
 celery_app.conf.beat_schedule = {
     "watchdog-stuck-scans": {
         "task": "watchdog_stuck_scans",
-        "schedule": 300.0,  # toutes les 5 minutes
+        "schedule": 300.0,  # every 5 minutes
+    },
+    "run-due-scheduled-scans": {
+        "task": "run_due_scheduled_scans",
+        "schedule": 60.0,  # every minute
     },
 }

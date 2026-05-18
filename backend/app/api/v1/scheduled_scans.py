@@ -74,9 +74,7 @@ async def get_scheduled(
             status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled scan not found"
         ) from exc
     except ScheduledScanForbiddenError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied") from exc
     return ScheduledScanOut.model_validate(record)
 
 
@@ -100,9 +98,7 @@ async def update_scheduled(
             status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled scan not found"
         ) from exc
     except ScheduledScanForbiddenError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied") from exc
     except InvalidCronError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -129,6 +125,4 @@ async def delete_scheduled(
             status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled scan not found"
         ) from exc
     except ScheduledScanForbiddenError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied") from exc

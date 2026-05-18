@@ -30,18 +30,12 @@ async def create_scheduled_scan(
     return record
 
 
-async def get_scheduled_scan_by_id(
-    db: AsyncSession, scheduled_id: int
-) -> ScheduledScan | None:
-    result = await db.execute(
-        select(ScheduledScan).where(ScheduledScan.id == scheduled_id)
-    )
+async def get_scheduled_scan_by_id(db: AsyncSession, scheduled_id: int) -> ScheduledScan | None:
+    result = await db.execute(select(ScheduledScan).where(ScheduledScan.id == scheduled_id))
     return result.scalar_one_or_none()
 
 
-async def list_scheduled_scans_for_user(
-    db: AsyncSession, user_id: int
-) -> list[ScheduledScan]:
+async def list_scheduled_scans_for_user(db: AsyncSession, user_id: int) -> list[ScheduledScan]:
     result = await db.execute(
         select(ScheduledScan)
         .where(ScheduledScan.user_id == user_id)
@@ -50,9 +44,7 @@ async def list_scheduled_scans_for_user(
     return list(result.scalars().all())
 
 
-async def list_due_scheduled_scans(
-    db: AsyncSession, now: datetime
-) -> list[ScheduledScan]:
+async def list_due_scheduled_scans(db: AsyncSession, now: datetime) -> list[ScheduledScan]:
     result = await db.execute(
         select(ScheduledScan).where(
             ScheduledScan.is_active.is_(True),
