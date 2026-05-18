@@ -44,3 +44,6 @@ backend/reports_output/
 # Celery Beat schedule (fichier binaire généré à runtime)
 celerybeat-schedule
 backend/celerybeat-schedule
+
+# Fichier de config Claude Code (local uniquement)
+CLAUDE.md
