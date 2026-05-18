@@ -1,0 +1,5 @@
+# Démonstrations de scan
+
+## Workflow hebdomadaire contre OWASP Juice Shop
+
+Le workflow GitHub Actions `.github/workflows/scan-vulnerable-app.yml` se déclenche manuellement (`workflow_dispatch`) et automatiquement chaque lundi à 06:00 UTC (`cron: "0 6 * * 1"`). Il démarre une instance éphémère d'[OWASP Juice Shop](https://owasp.org/www-project-juice-shop/) (`bkimminich/juice-shop:v17.3.0`) comme service container, puis lance les scanners passifs de WebGuard (`HeadersScanner`, `CookiesScanner`, `TechnologiesScanner`, `HttpMethodsScanner`, `SensitiveFilesScanner`) via `scripts/scan_target.py http://localhost:3000`. Le job échoue si moins de 3 vulnérabilités de sévérité `high` ou `medium` sont remontées — ce garde-fou détecte toute régression silencieuse dans les scanners (faux négatifs, parsing cassé, erreurs réseau) sur une cible volontairement vulnérable et reproductible. Les scanners actifs (XSS, SQLi, CSRF, open redirect, directory listing) sont volontairement exclus de ce job de validation : ils dépendent du crawler et seraient trop lents et trop variables pour servir d'assertion CI fiable.

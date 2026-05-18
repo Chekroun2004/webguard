@@ -1,0 +1,58 @@
+name: Scan vulnerable app
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Every Monday at 06:00 UTC
+    - cron: "0 6 * * 1"
+
+jobs:
+  scan-juice-shop:
+    name: Scan OWASP Juice Shop
+    runs-on: ubuntu-latest
+
+    services:
+      juice-shop:
+        image: bkimminich/juice-shop:v17.3.0
+        ports:
+          - 3000:3000
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Wait for juice-shop to be ready
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:3000/ >/dev/null 2>&1; then
+              echo "juice-shop is up after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "juice-shop did not become reachable within 60s" >&2
+          exit 1
+
+      - name: Run WebGuard passive scanners against juice-shop
+        run: python scripts/scan_target.py http://localhost:3000 | tee scan-output.json
+
+      - name: Upload findings as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: juice-shop-findings
+          path: scan-output.json
+          if-no-files-found: ignore
