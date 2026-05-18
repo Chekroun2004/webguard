@@ -33,10 +33,10 @@ async def _watchdog_async(session: AsyncSession) -> None:
 
 @celery_app.task(name="watchdog_stuck_scans")
 def watchdog_stuck_scans() -> None:
-    from app.db.session import sync_session_factory
+    from app.db.session import task_session
 
     async def _run() -> None:
-        async with sync_session_factory() as session:
+        async with task_session() as session:
             await _watchdog_async(session)
 
     asyncio.run(_run())

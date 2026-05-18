@@ -121,10 +121,10 @@ async def execute_scan(scan_id: int, session: AsyncSession) -> None:
 @celery_app.task(name="run_scan_task")
 def run_scan_task(scan_id: int) -> None:
     """Celery entry point — creates a fresh DB session and delegates to execute_scan."""
-    from app.db.session import sync_session_factory
+    from app.db.session import task_session
 
     async def _run() -> None:
-        async with sync_session_factory() as session:
+        async with task_session() as session:
             await execute_scan(scan_id, session)
             await session.commit()
 
