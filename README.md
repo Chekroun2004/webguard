@@ -3,6 +3,7 @@
 Scanner de vulnérabilités web — projet portfolio Master IGOV, FSR-UM5 Rabat.
 
 [![CI](https://github.com/Chekroun2004/webguard/actions/workflows/ci.yml/badge.svg)](https://github.com/Chekroun2004/webguard/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/Chekroun2004/webguard/branch/main/graph/badge.svg)](https://codecov.io/gh/Chekroun2004/webguard)
 ![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
@@ -80,12 +81,31 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
 ## Architecture
 
-```
-Frontend (React 18 + Vite)  ──REST──▶  Backend (FastAPI)  ──queue──▶  Worker (Celery)
-        :5173                               :8000                           │
-                                               │                            │
-                                               ▼                            ▼
-                                         PostgreSQL 15                  Redis 7
+```mermaid
+graph LR
+    User([Utilisateur])
+    FE["Frontend<br/>React 18 + Vite<br/>:5173"]
+    BE["Backend<br/>FastAPI<br/>:8000"]
+    Q[("Redis 7<br/>queue + cache")]
+    W["Worker<br/>Celery + Beat"]
+    DB[("PostgreSQL 15")]
+    MP["Mailpit<br/>:8025<br/>(dev only)"]
+
+    User -->|HTTPS| FE
+    FE -->|REST + SSE| BE
+    BE -->|enqueue task| Q
+    Q -->|dequeue| W
+    W -->|HTTP probes| Target[(Cible scannée)]
+    BE <-->|SQLAlchemy async| DB
+    W <-->|SQLAlchemy async| DB
+    W -.->|SMTP rapport| MP
+
+    classDef svc fill:#6366f1,stroke:#4338ca,color:#fff;
+    classDef store fill:#0ea5e9,stroke:#0369a1,color:#fff;
+    classDef ext fill:#94a3b8,stroke:#475569,color:#fff;
+    class FE,BE,W svc;
+    class Q,DB store;
+    class User,Target,MP ext;
 ```
 
 **Layering backend (strict) :**

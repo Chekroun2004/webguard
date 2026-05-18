@@ -34,7 +34,16 @@ jobs:
 
       - name: Run pytest with coverage
         working-directory: backend
-        run: pytest --cov=app --cov-report=term-missing -v
+        run: pytest --cov=app --cov-report=term-missing --cov-report=xml -v
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: backend/coverage.xml
+          flags: backend
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   backend-lint:
     name: Backend lint (ruff + black)
