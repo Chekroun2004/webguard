@@ -1,96 +1,143 @@
 # WebGuard
 
-Scanner de vulnérabilités web — plateforme SaaS qui scanne une URL et produit un rapport détaillé des vulnérabilités détectées, avec sévérité et recommandations.
+Scanner de vulnérabilités web — projet portfolio Master IGOV, FSR-UM5 Rabat.
 
-> Projet portfolio — Master IGOV, FSR-UM5 Rabat.
+![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
+![Tests](https://img.shields.io/badge/tests-150%20passing-brightgreen)
 
-## Stack
+L'utilisateur soumet une URL → le système scanne → génère un rapport PDF/JSON avec sévérités et recommandations.
 
-- **Backend:** Python 3.11+, FastAPI, SQLAlchemy 2.0, Alembic, Pydantic v2
-- **Workers:** Celery + Redis (scans asynchrones)
-- **DB:** PostgreSQL 15
-- **Frontend:** React 18 + TypeScript + Vite + TailwindCSS + shadcn/ui
-- **Auth:** JWT (argon2 hashing)
-- **PDF:** WeasyPrint
-- **Infra:** Docker + docker-compose
+---
 
-## Démarrage rapide
+## Fonctionnalités
+
+- **11 scanners** actifs et passifs : XSS réfléchi, SQLi, CSRF, open redirect, directory listing, headers de sécurité, cookies, SSL/TLS, fichiers sensibles, technologies exposées, méthodes HTTP dangereuses
+- **Crawl automatique** du site cible avant les scanners actifs
+- **Rapport PDF/JSON** exportable depuis l'interface
+- **Scan asynchrone** : Celery + Redis, progression en temps réel via SSE
+- **Vérification d'ownership** de domaine (fichier ou DNS TXT)
+- **Rate limiting** : 5 scans/heure par utilisateur, 100 req/min global
+- **Récupération automatique** des scans bloqués au redémarrage
+
+---
+
+## Demo
+
+### Dashboard — liste des scans
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Scan en cours
+
+![Scan en cours](docs/screenshots/scan-running.png)
+
+### Détail des vulnérabilités
+
+![Détail scan](docs/screenshots/scan-detail.png)
+
+### Rapport PDF généré
+
+![Rapport PDF](docs/screenshots/pdf-report.png)
+
+---
+
+## Quick Start
 
 ```bash
-git clone <repo> webguard
-cd webguard
-cp .env.example .env       # ajuste les valeurs si besoin
+# 1. Cloner le dépôt
+git clone <repo-url>
+cd scan
+
+# 2. Configurer l'environnement
+cp .env.example .env
+
+# 3. Lancer la stack complète
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
-Services exposés:
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| API | http://localhost:8000 |
+| Swagger | http://localhost:8000/docs |
 
-| Service     | URL                            |
-|-------------|--------------------------------|
-| Frontend    | http://localhost:5173          |
-| API         | http://localhost:8000          |
-| API docs    | http://localhost:8000/docs     |
-| PostgreSQL  | localhost:5432                 |
-| Redis       | localhost:6379                 |
+---
 
-Smoke test rapide:
-
-```bash
-curl http://localhost:8000/health
-# {"status":"ok","environment":"development"}
-```
-
-## État d'avancement
-
-- [x] **Étape 1** — Bootstrap (structure, Docker, FastAPI `/health`, React skeleton)
-- [ ] Étape 2 — Authentification (JWT + argon2)
-- [ ] Étape 3 — Premier scanner (headers de sécurité)
-- [ ] Étape 4 — Système asynchrone avec Celery
-- [ ] Étape 5 — Vérification d'ownership de domaine
-- [ ] Étape 6 — Modules de scan Phase 1
-- [ ] Étape 7 — Crawler + modules de scan Phase 2
-- [ ] Étape 8 — Rapports PDF / JSON
-- [ ] Étape 9 — Polissage et documentation
-
-Spec de design complète: [`docs/superpowers/specs/2026-05-17-webguard-design.md`](docs/superpowers/specs/2026-05-17-webguard-design.md)
-
-## Structure
+## Architecture
 
 ```
-webguard/
-├── backend/             # FastAPI + Celery workers
-│   ├── app/
-│   │   ├── api/v1/      # Routes
-│   │   ├── core/        # Config, sécurité, JWT
-│   │   ├── db/          # Modèles SQLAlchemy
-│   │   ├── schemas/     # Schémas Pydantic
-│   │   ├── services/    # Logique métier
-│   │   ├── scanners/    # Modules de scan
-│   │   ├── workers/     # Tâches Celery
-│   │   ├── reports/     # Génération PDF/JSON
-│   │   └── main.py
-│   ├── tests/
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── pyproject.toml
-├── frontend/            # React + Vite + Tailwind + shadcn/ui
-│   ├── src/
-│   ├── Dockerfile
-│   └── package.json
-├── docs/                # Specs, design docs
-├── docker-compose.yml
-├── docker-compose.dev.yml
-└── .env.example
+Frontend (React 18 + Vite)  ──REST──▶  Backend (FastAPI)  ──queue──▶  Worker (Celery)
+        :5173                               :8000                           │
+                                               │                            │
+                                               ▼                            ▼
+                                         PostgreSQL 15                  Redis 7
 ```
+
+**Layering backend (strict) :**
+
+```
+Routes (app/api/v1/)
+  └─▶ Services (app/services/)       ← logique métier
+        └─▶ Repositories (app/repositories/)  ← accès DB
+              └─▶ Models (app/db/models/)      ← SQLAlchemy ORM
+```
+
+---
+
+## Stack technique
+
+| Couche | Technologie |
+|---|---|
+| Backend | FastAPI 0.115, Python 3.11 |
+| Workers | Celery 5.4, Redis 7 |
+| Base de données | PostgreSQL 15, SQLAlchemy 2.0 (async) |
+| Auth | JWT (python-jose), argon2 (passlib) |
+| PDF | WeasyPrint 62, Jinja2 |
+| Rate limiting | slowapi 0.1.9 |
+| Frontend | React 18, Vite, Tailwind CSS, shadcn/ui |
+| Infra | Docker Compose (5 services) |
+
+---
 
 ## Tests
 
-Backend:
-
 ```bash
-docker compose exec backend pytest
+# Backend — 150 tests (SQLite in-memory, sans Postgres)
+docker compose exec backend pytest -v
+
+# Avec couverture
+docker compose exec backend pytest --cov=app --cov-report=term-missing
 ```
 
-## Licence
+---
 
-À définir.
+## Structure du projet
+
+```
+scan/
+├── backend/
+│   ├── app/
+│   │   ├── api/v1/          # Routes FastAPI
+│   │   ├── core/            # Config, sécurité, rate limiting
+│   │   ├── db/              # Modèles SQLAlchemy + migrations Alembic
+│   │   ├── scanners/        # 11 scanners (base.py + implémentations)
+│   │   ├── services/        # Logique métier
+│   │   ├── repositories/    # Accès base de données
+│   │   ├── templates/       # Template HTML pour PDF
+│   │   └── workers/         # Celery tasks + watchdog
+│   └── tests/               # 150 tests pytest
+├── frontend/
+│   └── src/
+│       ├── pages/           # Dashboard, Scan, Domains, Auth
+│       ├── hooks/           # TanStack Query hooks
+│       └── components/      # SeverityBadge, ScanProgressBar
+└── docker-compose.yml
+```
+
+---
+
+## Auteur
+
+**Omar Chekroun** — Master IGOV, Faculté des Sciences de Rabat, UM5
