@@ -11,7 +11,7 @@ GET    /scans/{id}/events  → SSE stream of status updates
 import asyncio
 import json
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
@@ -58,7 +58,7 @@ def _to_out(scan) -> ScanOut:
 @limiter.limit("5/hour", key_func=get_user_id_key)
 async def create_scan(
     request: Request,
-    body: ScanCreate,
+    body: ScanCreate = Body(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> ScanOut:
