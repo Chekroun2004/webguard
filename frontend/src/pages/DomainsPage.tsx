@@ -148,7 +148,7 @@ export function DomainsPage() {
       <header className="border-b bg-card">
         <div className="container flex h-14 items-center gap-4">
           <ShieldCheck className="h-5 w-5 text-primary" />
-          <span className="font-semibold">WebGuard</span>
+          <span className="font-semibold"><span className="text-[#6366f1]">Web</span>Guard</span>
           <span className="text-muted-foreground">/</span>
           <span className="text-sm">Mes domaines</span>
         </div>

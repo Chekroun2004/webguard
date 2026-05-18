@@ -187,7 +187,7 @@ export function ScanDetailPage() {
         <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center gap-3">
             <ShieldCheck className="h-5 w-5 text-primary" />
-            <span className="font-semibold">WebGuard</span>
+            <span className="font-semibold"><span className="text-[#6366f1]">Web</span>Guard</span>
           </div>
           <Link
             to="/dashboard"

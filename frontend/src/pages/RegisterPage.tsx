@@ -34,7 +34,7 @@ export function RegisterPage() {
       <div className="w-full max-w-md space-y-6">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-7 w-7 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight">WebGuard</h1>
+          <h1 className="text-2xl font-bold tracking-tight"><span className="text-[#6366f1]">Web</span>Guard</h1>
         </div>
 
         <div className="rounded-lg border bg-card p-6 space-y-5">
