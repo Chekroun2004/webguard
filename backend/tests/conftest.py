@@ -9,6 +9,7 @@ Each test function gets:
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import (
+    AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
@@ -16,6 +17,7 @@ from sqlalchemy.pool import StaticPool
 
 import app.db.models
 from app.db.base import Base
+from app.db.models.user import User
 from app.db.session import get_db
 from app.main import app
 
@@ -68,3 +70,26 @@ async def auth_headers(client: AsyncClient) -> dict[str, str]:
         json={"email": "tester@example.com", "password": "password123"},
     )
     return {"Authorization": f"Bearer {resp.json()['access_token']}"}
+
+
+@pytest.fixture(scope="function")
+async def db_session(engine) -> AsyncSession:
+    """Yield a raw async session for tests that bypass the HTTP client."""
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    async with session_factory() as session:
+        yield session
+
+
+@pytest.fixture(scope="function")
+async def registered_user(db_session: AsyncSession) -> dict:
+    """Insert a user directly into the DB and return a dict with its fields."""
+    user = User(
+        email="recovery@test.com",
+        password_hash="hashed",
+        is_active=True,
+        role="user",
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+    return {"id": user.id, "email": user.email}
