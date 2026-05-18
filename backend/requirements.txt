@@ -21,3 +21,4 @@ pydyf==0.11.0
 slowapi==0.1.9
 limits==3.14.1
 aiosmtplib==3.0.1
+croniter==2.0.7
