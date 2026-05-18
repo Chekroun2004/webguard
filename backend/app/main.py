@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -6,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 import app.workers.celery_app
+
+logger = logging.getLogger(__name__)
 from app.api.v1.router import api_v1_router
 from app.core.config import settings
 from app.db.models.scan import Scan
@@ -27,8 +30,11 @@ async def recover_stuck_scans(session: AsyncSession) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with AsyncSessionLocal() as db:
-        await recover_stuck_scans(db)
+    try:
+        async with AsyncSessionLocal() as db:
+            await recover_stuck_scans(db)
+    except Exception:
+        logger.exception("Startup recovery failed — continuing anyway")
     yield
 
 
