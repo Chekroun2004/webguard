@@ -45,9 +45,9 @@ class CorsScanner(BaseScanner):
             return []
 
         findings: list[Finding] = []
+        creds_header = headers.get("access-control-allow-credentials", "")
         evidence = (
-            f"Access-Control-Allow-Origin: {acao}; "
-            f"Access-Control-Allow-Credentials: {headers.get('access-control-allow-credentials', '')}"
+            f"Access-Control-Allow-Origin: {acao}; Access-Control-Allow-Credentials: {creds_header}"
         )
 
         if acao.strip() == EVIL_ORIGIN and acac:

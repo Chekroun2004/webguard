@@ -40,10 +40,7 @@ class TestSecurityTxtScanner:
 
     async def test_valid_security_txt_no_finding(self):
         scanner = SecurityTxtScanner()
-        body = (
-            "Contact: mailto:security@example.com\n"
-            "Expires: 2030-01-01T00:00:00Z\n"
-        )
+        body = "Contact: mailto:security@example.com\n" "Expires: 2030-01-01T00:00:00Z\n"
         with patch.object(scanner, "_fetch", AsyncMock(return_value=resp(200, body))):
             findings = await scanner.scan("https://example.com", {})
         assert findings == []

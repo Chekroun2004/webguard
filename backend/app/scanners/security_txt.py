@@ -49,8 +49,7 @@ class SecurityTxtScanner(BaseScanner):
         if status == 200:
             stripped = body.strip()
             has_contact = any(
-                line.strip().lower().startswith("contact:")
-                for line in stripped.splitlines()
+                line.strip().lower().startswith("contact:") for line in stripped.splitlines()
             )
             if not stripped or not has_contact:
                 return [
