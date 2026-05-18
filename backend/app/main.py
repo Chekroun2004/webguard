@@ -3,17 +3,21 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.ext.asyncio import AsyncSession
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.workers.celery_app
-
-logger = logging.getLogger(__name__)
 from app.api.v1.router import api_v1_router
 from app.core.config import settings
+from app.core.limiter import limiter
 from app.db.models.scan import Scan
 from app.db.session import AsyncSessionLocal
 from app.workers.tasks.scan import run_scan_task
+
+logger = logging.getLogger(__name__)
 
 
 async def recover_stuck_scans(session: AsyncSession) -> None:
@@ -44,6 +48,10 @@ app = FastAPI(
     version="0.2.0",
     lifespan=lifespan,
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
