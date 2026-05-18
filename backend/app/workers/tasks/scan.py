@@ -57,6 +57,8 @@ SCANNERS = PASSIVE_SCANNERS
 
 async def _notify_scan_complete(session: AsyncSession, scan) -> None:
     """Best-effort email notification — never raises."""
+    import logging
+
     from sqlalchemy import select
 
     from app.db.models.user import User
@@ -69,9 +71,8 @@ async def _notify_scan_complete(session: AsyncSession, scan) -> None:
             return
         findings = list(scan.vulnerabilities)
         await send_scan_complete_email(user.email, user.full_name, scan, findings)
-    except Exception:  # noqa: BLE001
-        # Logging happens in the email service; swallow anything here too
-        pass
+    except Exception as exc:
+        logging.getLogger(__name__).warning("Email notification failed: %s", exc)
 
 
 async def execute_scan(scan_id: int, session: AsyncSession) -> None:

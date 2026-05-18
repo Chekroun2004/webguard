@@ -4,9 +4,10 @@ ScanDiffService — compare two scans of the same URL and return added/removed/u
 
 from __future__ import annotations
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.db.models.scan import Scan, Vulnerability
 from app.services.scan import ScanForbiddenError, ScanNotFoundError, ScanService
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _key(v: Vulnerability) -> tuple[str, str, str]:
@@ -58,4 +59,4 @@ def _scan_summary(scan: Scan) -> dict:
     }
 
 
-__all__ = ["ScanDiffService", "ScanUrlMismatchError", "ScanNotFoundError", "ScanForbiddenError"]
+__all__ = ["ScanDiffService", "ScanForbiddenError", "ScanNotFoundError", "ScanUrlMismatchError"]

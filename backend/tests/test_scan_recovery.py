@@ -1,11 +1,11 @@
-import pytest
-from unittest.mock import patch, MagicMock
-from httpx import AsyncClient, ASGITransport
 from datetime import UTC, datetime, timedelta
-from sqlalchemy import select, update
+from unittest.mock import patch
+
+import pytest
+from sqlalchemy import update
 
 from app.db.models.scan import Scan
-from app.main import recover_stuck_scans, app
+from app.main import recover_stuck_scans
 from app.workers.tasks.watchdog import _watchdog_async
 
 
@@ -65,9 +65,7 @@ async def test_watchdog_redispatches_old_pending_scan(db_session, registered_use
     db_session.add(scan)
     await db_session.commit()
     await db_session.refresh(scan)
-    await db_session.execute(
-        update(Scan).where(Scan.id == scan.id).values(created_at=old_time)
-    )
+    await db_session.execute(update(Scan).where(Scan.id == scan.id).values(created_at=old_time))
     await db_session.commit()
 
     with patch("app.workers.tasks.watchdog.run_scan_task") as mock_task:
@@ -92,9 +90,7 @@ async def test_watchdog_ignores_completed_scans(db_session, registered_user):
     scan = Scan(user_id=registered_user["id"], url="https://example.com", status="completed")
     db_session.add(scan)
     await db_session.commit()
-    await db_session.execute(
-        update(Scan).where(Scan.id == scan.id).values(created_at=old_time)
-    )
+    await db_session.execute(update(Scan).where(Scan.id == scan.id).values(created_at=old_time))
     await db_session.commit()
 
     with patch("app.workers.tasks.watchdog.run_scan_task") as mock_task:
@@ -109,9 +105,7 @@ async def test_watchdog_redispatches_old_running_scan(db_session, registered_use
     db_session.add(scan)
     await db_session.commit()
     await db_session.refresh(scan)
-    await db_session.execute(
-        update(Scan).where(Scan.id == scan.id).values(created_at=old_time)
-    )
+    await db_session.execute(update(Scan).where(Scan.id == scan.id).values(created_at=old_time))
     await db_session.commit()
 
     with patch("app.workers.tasks.watchdog.run_scan_task") as mock_task:

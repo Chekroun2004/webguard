@@ -29,6 +29,8 @@ export default [
         RequestInit: "readonly",
         Response: "readonly",
         URL: "readonly",
+        Blob: "readonly",
+        HTMLAnchorElement: "readonly",
         // Node globals (vite.config.ts)
         __dirname: "readonly",
         process: "readonly",

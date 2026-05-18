@@ -76,9 +76,25 @@ class TestSendScanCompleteEmail:
     async def test_summary_counts_match_findings(self, captured_send):
         scan = _make_scan()
         findings = [
-            Vulnerability(scan_id=42, name="A", severity="critical", description="", recommendation="", evidence=""),
-            Vulnerability(scan_id=42, name="B", severity="critical", description="", recommendation="", evidence=""),
-            Vulnerability(scan_id=42, name="C", severity="low", description="", recommendation="", evidence=""),
+            Vulnerability(
+                scan_id=42,
+                name="A",
+                severity="critical",
+                description="",
+                recommendation="",
+                evidence="",
+            ),
+            Vulnerability(
+                scan_id=42,
+                name="B",
+                severity="critical",
+                description="",
+                recommendation="",
+                evidence="",
+            ),
+            Vulnerability(
+                scan_id=42, name="C", severity="low", description="", recommendation="", evidence=""
+            ),
         ]
         await email_service.send_scan_complete_email("u@gmail.com", None, scan, findings)
         message = captured_send.await_args.args[0]

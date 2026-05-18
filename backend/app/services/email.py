@@ -36,9 +36,7 @@ def _build_summary(findings: list[Vulnerability]) -> dict[str, int]:
 def _top_findings(findings: list[Vulnerability], limit: int = 5) -> list[Vulnerability]:
     return sorted(
         findings,
-        key=lambda f: (
-            _SEVERITY_ORDER.index(f.severity) if f.severity in _SEVERITY_ORDER else 99
-        ),
+        key=lambda f: (_SEVERITY_ORDER.index(f.severity) if f.severity in _SEVERITY_ORDER else 99),
     )[:limit]
 
 
@@ -84,6 +82,6 @@ async def send_scan_complete_email(
             timeout=10,
         )
         return True
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("Failed to send scan-complete email: %s", exc)
         return False

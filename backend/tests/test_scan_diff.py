@@ -4,8 +4,6 @@ Integration tests for the scan diff route.
 GET /api/v1/scans/diff?old={id1}&new={id2}
 """
 
-from unittest.mock import patch
-
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -113,9 +111,7 @@ class TestScanDiff:
         login = await client.post("/api/v1/auth/login", json=creds)
         headers_b = {"Authorization": f"Bearer {login.json()['access_token']}"}
 
-        resp = await client.get(
-            f"/api/v1/scans/diff?old={old_id}&new={new_id}", headers=headers_b
-        )
+        resp = await client.get(f"/api/v1/scans/diff?old={old_id}&new={new_id}", headers=headers_b)
         assert resp.status_code == 403
 
     async def test_requires_auth(self, client: AsyncClient):

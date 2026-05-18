@@ -21,9 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 async def recover_stuck_scans(session: AsyncSession) -> None:
-    result = await session.execute(
-        select(Scan).where(Scan.status.in_(["pending", "running"]))
-    )
+    result = await session.execute(select(Scan).where(Scan.status.in_(["pending", "running"])))
     stuck = result.scalars().all()
     for scan in stuck:
         scan.status = "pending"

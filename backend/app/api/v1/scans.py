@@ -12,18 +12,17 @@ import asyncio
 import json
 
 from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Request, status
-
-from app.core.config import settings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
 from app.api.deps import get_current_user
+from app.core.config import settings
+from app.core.limiter import get_user_id_key, limiter
 from app.db.models.user import User
 from app.db.session import AsyncSessionLocal, get_db
 from app.repositories.scan import get_scan_by_id
 from app.schemas.scan import ScanCreate, ScanOut, VulnerabilityOut
 from app.services.scan import ScanForbiddenError, ScanNotFoundError, ScanService
-from app.core.limiter import get_user_id_key, limiter
 from app.workers.tasks.scan import run_scan_task
 
 router = APIRouter(prefix="/scans", tags=["scans"])
