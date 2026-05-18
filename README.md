@@ -45,6 +45,14 @@ L'utilisateur soumet une URL → le système scanne → génère un rapport PDF/
 
 ![Rapport PDF](docs/screenshots/pdf-report.png)
 
+### Comparaison de scans
+
+![Scan diff](docs/screenshots/scan-diff.png)
+
+### Notification email (Mailpit en dev)
+
+![Email Mailpit](docs/screenshots/email-mailpit.png)
+
 ---
 
 ## Quick Start
