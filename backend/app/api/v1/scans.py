@@ -8,12 +8,10 @@ GET    /scans/{id}/status  → {id, status}
 GET    /scans/{id}/events  → SSE stream of status updates
 """
 
-from __future__ import annotations
-
 import asyncio
 import json
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
@@ -23,6 +21,7 @@ from app.db.session import AsyncSessionLocal, get_db
 from app.repositories.scan import get_scan_by_id
 from app.schemas.scan import ScanCreate, ScanOut, VulnerabilityOut
 from app.services.scan import ScanForbiddenError, ScanNotFoundError, ScanService
+from app.core.limiter import get_user_id_key, limiter
 from app.workers.tasks.scan import run_scan_task
 
 router = APIRouter(prefix="/scans", tags=["scans"])
@@ -56,7 +55,9 @@ def _to_out(scan) -> ScanOut:
 
 
 @router.post("", status_code=status.HTTP_202_ACCEPTED, response_model=ScanOut)
+@limiter.limit("5/hour", key_func=get_user_id_key)
 async def create_scan(
+    request: Request,
     body: ScanCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),

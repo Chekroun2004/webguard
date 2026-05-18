@@ -93,3 +93,15 @@ async def registered_user(db_session: AsyncSession) -> dict:
     await db_session.commit()
     await db_session.refresh(user)
     return {"id": user.id, "email": user.email}
+
+
+@pytest.fixture(autouse=True)
+def disable_rate_limiting():
+    """Disable rate limiting for all tests. Tests that specifically test rate
+    limiting re-enable it locally inside the test body."""
+    from app.core.limiter import limiter
+
+    original = limiter.enabled
+    limiter.enabled = False
+    yield
+    limiter.enabled = original
