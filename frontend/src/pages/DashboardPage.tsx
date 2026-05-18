@@ -226,6 +226,12 @@ export function DashboardPage() {
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground hidden sm:block">{user?.email}</span>
             <Link
+              to="/diff"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Comparer
+            </Link>
+            <Link
               to="/domains"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >

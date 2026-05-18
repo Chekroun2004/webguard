@@ -30,3 +30,19 @@ export type TokenPair = {
   refresh_token: string;
   token_type: string;
 };
+
+export type ScanDiffSummary = {
+  id: number;
+  url: string;
+  created_at: string;
+  finished_at: string | null;
+  total: number;
+};
+
+export type ScanDiff = {
+  old_scan: ScanDiffSummary;
+  new_scan: ScanDiffSummary;
+  added: Vulnerability[];
+  removed: Vulnerability[];
+  unchanged: Vulnerability[];
+};

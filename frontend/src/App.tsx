@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DashboardPage } from "@/pages/DashboardPage";
+import { DiffPage } from "@/pages/DiffPage";
 import { DomainsPage } from "@/pages/DomainsPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
@@ -33,6 +34,14 @@ function App() {
         element={
           <ProtectedRoute>
             <ScanDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/diff"
+        element={
+          <ProtectedRoute>
+            <DiffPage />
           </ProtectedRoute>
         }
       />
