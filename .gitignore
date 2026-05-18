@@ -9,6 +9,8 @@ venv/
 .pytest_cache/
 .ruff_cache/
 .coverage
+coverage.xml
+backend/coverage.xml
 htmlcov/
 *.egg-info/
 backend/dist/
