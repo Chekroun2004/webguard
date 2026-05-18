@@ -11,7 +11,9 @@ GET    /scans/{id}/events  → SSE stream of status updates
 import asyncio
 import json
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Request, status
+
+from app.core.config import settings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
@@ -54,10 +56,21 @@ def _to_out(scan) -> ScanOut:
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 
+async def _run_scan_in_process(scan_id: int) -> None:
+    """Fallback when Celery is disabled — run the scan in the API process."""
+    from app.db.session import task_session
+    from app.workers.tasks.scan import execute_scan
+
+    async with task_session() as session:
+        await execute_scan(scan_id, session)
+        await session.commit()
+
+
 @router.post("", status_code=status.HTTP_202_ACCEPTED, response_model=ScanOut)
 @limiter.limit("5/hour", key_func=get_user_id_key)
 async def create_scan(
     request: Request,
+    background_tasks: BackgroundTasks,
     body: ScanCreate = Body(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -65,7 +78,10 @@ async def create_scan(
     service = ScanService(db)
     scan = await service.create_scan(user_id=current_user.id, url=str(body.url))
     # Dispatch async task AFTER the scan row is persisted
-    run_scan_task.delay(scan.id)
+    if settings.use_celery:
+        run_scan_task.delay(scan.id)
+    else:
+        background_tasks.add_task(_run_scan_in_process, scan.id)
     return _to_out(scan)
 
 

@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     # which breaks plain URLs. We keep it as str and expose a property instead.
     backend_cors_origins: str = "http://localhost:5173"
 
+    # Async task dispatch — Celery (dev) or FastAPI BackgroundTasks (prod free tier)
+    use_celery: bool = True
+
     # Email (SMTP)
     smtp_host: str = "mailpit"
     smtp_port: int = 1025

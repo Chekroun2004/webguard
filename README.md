@@ -153,7 +153,10 @@ scan/
 
 ## Déploiement
 
-Configs prêtes pour Fly.io (3 apps : API, Worker, Frontend). Voir [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) pour le guide pas à pas (création des managed services Postgres + Redis, secrets, `flyctl deploy`).
+Deux cibles supportées :
+
+- **Render.com** (gratuit, recommandé pour démo portfolio) — Blueprint en 1 click via `render.yaml`. Voir [`docs/DEPLOYMENT_RENDER.md`](docs/DEPLOYMENT_RENDER.md).
+- **Fly.io** (carte de crédit requise mais $0 dans les limites du free tier) — configs `fly.toml` + worker Celery. Voir [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ---
 

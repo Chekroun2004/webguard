@@ -1,0 +1,90 @@
+# Render.com Blueprint — WebGuard
+# Deploy with: https://dashboard.render.com/blueprints (point at this repo)
+
+services:
+  # ─── Backend API (FastAPI + scan execution in-process via BackgroundTasks) ───
+  - type: web
+    name: webguard-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile.prod
+    dockerContext: ./backend
+    plan: free
+    region: frankfurt
+    healthCheckPath: /health
+    envVars:
+      - key: USE_CELERY
+        value: "false"
+      - key: EMAIL_NOTIFICATIONS_ENABLED
+        value: "false"
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: webguard-redis
+          property: connectionString
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: webguard-db
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: webguard-db
+          property: port
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: webguard-db
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: webguard-db
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: webguard-db
+          property: password
+      - key: BACKEND_CORS_ORIGINS
+        sync: false  # set manually to the frontend URL once deployed
+      - key: FRONTEND_URL
+        sync: false  # set manually to the frontend URL once deployed
+
+  # ─── Redis (Render Key Value, free tier) ───
+  - type: keyvalue
+    name: webguard-redis
+    plan: free
+    region: frankfurt
+    ipAllowList: []  # only internal connections
+
+  # ─── Frontend (static site built from React+Vite) ───
+  - type: web
+    name: webguard-web
+    runtime: static
+    rootDir: ./frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false  # set manually to the API URL once deployed
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+
+databases:
+  - name: webguard-db
+    databaseName: webguard
+    user: webguard
+    plan: free
+    region: frankfurt
