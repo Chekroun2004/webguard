@@ -36,18 +36,34 @@ const SEVERITY_LABELS: Record<Severity, string> = {
   info: "Info",
 };
 
+function triggerDownload(blob: Blob, filename: string) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 function downloadFile(url: string, filename: string) {
   const token = tokenStorage.getAccess();
   fetch(`${BASE_URL}${url}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   })
     .then((r) => r.blob())
-    .then((blob) => {
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(a.href);
+    .then((blob) => triggerDownload(blob, filename));
+}
+
+function downloadJson(url: string, filename: string) {
+  const token = tokenStorage.getAccess();
+  fetch(`${BASE_URL}${url}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+    .then((r) => r.json())
+    .then((data) => {
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      triggerDownload(blob, filename);
     });
 }
 
@@ -198,7 +214,7 @@ export function ScanDetailPage() {
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={() =>
-              downloadFile(`/api/v1/scans/${scan.id}/report`, `webguard-${scan.id}.json`)
+              downloadJson(`/api/v1/scans/${scan.id}/report`, `webguard-${scan.id}.json`)
             }
             className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:bg-muted transition-colors"
           >
