@@ -7,6 +7,7 @@ import { DomainsPage } from "@/pages/DomainsPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { ScanDetailPage } from "@/pages/ScanDetailPage";
+import { ApiKeysPage } from "@/pages/ApiKeysPage";
 import { ScheduledScansPage } from "@/pages/ScheduledScansPage";
 import { SecurityPage } from "@/pages/SecurityPage";
 import { WebhooksPage } from "@/pages/WebhooksPage";
@@ -53,6 +54,14 @@ function App() {
         element={
           <ProtectedRoute>
             <SecurityPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/api-keys"
+        element={
+          <ProtectedRoute>
+            <ApiKeysPage />
           </ProtectedRoute>
         }
       />

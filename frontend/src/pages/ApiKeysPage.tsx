@@ -1,0 +1,235 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { AlertTriangle, ArrowLeft, Copy, Loader2, ShieldCheck, Trash2 } from "lucide-react";
+
+import { ThemeToggle } from "@/components/ThemeToggle";
+import {
+  useApiKeysList,
+  useCreateApiKey,
+  useRevokeApiKey,
+  type ApiKey,
+  type ApiKeyCreated,
+} from "@/hooks/useApiKeys";
+import { ApiError } from "@/lib/api";
+
+// ── Modal shown ONCE after creation ──────────────────────────────────────────
+
+function CreatedKeyModal({
+  created,
+  onClose,
+}: {
+  created: ApiKeyCreated;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(created.key);
+    setCopied(true);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+      <div className="bg-card rounded-lg border max-w-lg w-full p-6 space-y-4">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <h3 className="font-semibold">Copiez cette clé maintenant</h3>
+            <p className="text-sm text-muted-foreground">
+              Elle ne sera plus jamais affichée. Si vous la perdez, vous devrez en
+              générer une nouvelle.
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-md border bg-muted/40 p-3 break-all font-mono text-sm">
+          {created.key}
+        </div>
+
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={copy}
+            className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors flex items-center gap-1.5"
+          >
+            <Copy className="h-4 w-4" />
+            {copied ? "Copié !" : "Copier"}
+          </button>
+          <button
+            onClick={onClose}
+            className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            J'ai copié ma clé
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Create form ──────────────────────────────────────────────────────────────
+
+function CreateApiKeyForm({ onCreated }: { onCreated: (k: ApiKeyCreated) => void }) {
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const create = useCreateApiKey();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    try {
+      const created = await create.mutateAsync(name);
+      setName("");
+      onCreated(created);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.detail : "Erreur inattendue.");
+    }
+  };
+
+  return (
+    <div className="rounded-lg border bg-card p-6 space-y-4">
+      <h2 className="font-semibold">Nouvelle clé API</h2>
+      {error && (
+        <p className="text-sm text-destructive rounded-md bg-destructive/10 px-3 py-2">
+          {error}
+        </p>
+      )}
+      <form onSubmit={handleSubmit} className="flex gap-2">
+        <input
+          type="text"
+          required
+          minLength={1}
+          maxLength={128}
+          placeholder="ex: ci-bot, mon-cli"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          disabled={create.isPending}
+          className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+        />
+        <button
+          type="submit"
+          disabled={create.isPending}
+          className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-1.5"
+        >
+          {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          Générer
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// ── Key row ──────────────────────────────────────────────────────────────────
+
+function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
+  const revoke = useRevokeApiKey();
+  const isRevoked = apiKey.revoked_at !== null;
+
+  return (
+    <div className="rounded-lg border bg-card px-4 py-3 flex items-center justify-between gap-4">
+      <div className="min-w-0 space-y-0.5">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-sm truncate">{apiKey.name}</span>
+          <code className="text-xs rounded bg-muted px-1.5 py-0.5 font-mono">
+            {apiKey.prefix}…
+          </code>
+          {isRevoked ? (
+            <span className="text-xs rounded bg-destructive/10 text-destructive px-1.5 py-0.5">
+              révoquée
+            </span>
+          ) : (
+            <span className="text-xs rounded bg-green-500/15 text-green-600 px-1.5 py-0.5">
+              active
+            </span>
+          )}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          Créée le {new Date(apiKey.created_at).toLocaleString("fr-FR")}
+          {apiKey.last_used_at && (
+            <>
+              {" • "}Utilisée le {new Date(apiKey.last_used_at).toLocaleString("fr-FR")}
+            </>
+          )}
+        </div>
+      </div>
+      {!isRevoked && (
+        <button
+          onClick={() => revoke.mutate(apiKey.id)}
+          disabled={revoke.isPending}
+          className="text-xs rounded-md border px-2 py-1 hover:bg-destructive/10 hover:text-destructive disabled:opacity-50 flex items-center gap-1"
+          aria-label="Révoquer"
+        >
+          <Trash2 className="h-3 w-3" />
+          Révoquer
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
+
+export function ApiKeysPage() {
+  const { data: keys, isLoading } = useApiKeysList();
+  const [created, setCreated] = useState<ApiKeyCreated | null>(null);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card">
+        <div className="container flex h-14 items-center justify-between">
+          <div className="flex items-center gap-4">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <span className="font-semibold">
+              <span className="text-[#6366f1]">Web</span>Guard
+            </span>
+            <span className="text-muted-foreground">/</span>
+            <span className="text-sm">Clés API</span>
+          </div>
+          <ThemeToggle />
+        </div>
+      </header>
+
+      <main className="container py-10 space-y-8 max-w-2xl">
+        <div className="flex items-center gap-3">
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Tableau de bord
+          </Link>
+        </div>
+
+        <div>
+          <h1 className="text-2xl font-bold">Clés API</h1>
+          <p className="text-muted-foreground mt-1">
+            Utilisez une clé API à la place du JWT pour automatiser les scans (CI, CLI…).
+            Authentifiez-vous via le header <code>X-API-Key: wgk_xxx</code>.
+          </p>
+        </div>
+
+        <CreateApiKeyForm onCreated={setCreated} />
+
+        <div className="space-y-3">
+          <h2 className="font-semibold">Clés existantes</h2>
+          {isLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
+            </div>
+          ) : !keys || keys.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Aucune clé. Créez-en une ci-dessus.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {keys.map((k) => (
+                <ApiKeyRow key={k.id} apiKey={k} />
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+
+      {created && <CreatedKeyModal created={created} onClose={() => setCreated(null)} />}
+    </div>
+  );
+}

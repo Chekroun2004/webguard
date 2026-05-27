@@ -399,6 +399,12 @@ export function DashboardPage() {
             >
               Sécurité
             </Link>
+            <Link
+              to="/api-keys"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Clés API
+            </Link>
             <ThemeToggle />
             <button
               onClick={logout}
