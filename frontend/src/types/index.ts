@@ -31,6 +31,14 @@ export type TokenPair = {
   token_type: string;
 };
 
+export type LoginResponse = {
+  access_token: string | null;
+  refresh_token: string | null;
+  token_type: string;
+  totp_required: boolean;
+  pending_token: string | null;
+};
+
 export type ScanDiffSummary = {
   id: number;
   url: string;

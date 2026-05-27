@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { api } from "@/lib/api";
 import { tokenStorage } from "@/lib/auth";
-import type { TokenPair, User } from "@/types";
+import type { LoginResponse, TokenPair, User } from "@/types";
 
 export function useCurrentUser() {
   return useQuery<User>({
@@ -19,7 +19,21 @@ export function useLogin() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: { email: string; password: string }) =>
-      api.post<TokenPair>("/api/v1/auth/login", data, true),
+      api.post<LoginResponse>("/api/v1/auth/login", data, true),
+    onSuccess: (resp) => {
+      if (resp.access_token && resp.refresh_token) {
+        tokenStorage.set(resp.access_token, resp.refresh_token);
+        void queryClient.invalidateQueries({ queryKey: ["me"] });
+      }
+    },
+  });
+}
+
+export function useLoginTotp() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { pending_token: string; code: string }) =>
+      api.post<TokenPair>("/api/v1/auth/login/totp", data, true),
     onSuccess: (tokens) => {
       tokenStorage.set(tokens.access_token, tokens.refresh_token);
       void queryClient.invalidateQueries({ queryKey: ["me"] });
