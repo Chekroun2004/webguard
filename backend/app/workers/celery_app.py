@@ -6,6 +6,11 @@ celery_app = Celery(
     "webguard",
     broker=settings.redis_url,
     backend=settings.redis_url,
+    include=[
+        "app.workers.tasks.scan",
+        "app.workers.tasks.watchdog",
+        "app.workers.tasks.scheduled",
+    ],
 )
 
 celery_app.conf.update(
