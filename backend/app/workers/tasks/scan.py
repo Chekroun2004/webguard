@@ -60,13 +60,16 @@ SCANNERS = PASSIVE_SCANNERS
 
 
 async def _notify_scan_complete(session: AsyncSession, scan) -> None:
-    """Best-effort email notification — never raises."""
+    """Best-effort notifications (email + webhooks) — never raises."""
     import logging
 
     from sqlalchemy import select
 
     from app.db.models.user import User
     from app.services.email import send_scan_complete_email
+    from app.services.webhook_sender import notify_scan_complete as notify_webhooks
+
+    logger = logging.getLogger(__name__)
 
     try:
         result = await session.execute(select(User).where(User.id == scan.user_id))
@@ -74,9 +77,16 @@ async def _notify_scan_complete(session: AsyncSession, scan) -> None:
         if user is None:
             return
         findings = list(scan.vulnerabilities)
-        await send_scan_complete_email(user.email, user.full_name, scan, findings)
+        try:
+            await send_scan_complete_email(user.email, user.full_name, scan, findings)
+        except Exception as exc:
+            logger.warning("Email notification failed: %s", exc)
+        try:
+            await notify_webhooks(session, scan.user_id, scan, findings)
+        except Exception as exc:
+            logger.warning("Webhook notifications failed: %s", exc)
     except Exception as exc:
-        logging.getLogger(__name__).warning("Email notification failed: %s", exc)
+        logger.warning("Notification dispatch failed: %s", exc)
 
 
 async def execute_scan(scan_id: int, session: AsyncSession) -> None:
