@@ -69,7 +69,7 @@ async def test_log_swallows_db_errors_returning_none(db_session, registered_user
     async def boom(*args, **kwargs):
         raise RuntimeError("simulated DB failure")
 
-    monkeypatch.setattr("app.repositories.audit.create_audit_event", boom)
+    monkeypatch.setattr("app.services.audit.create_audit_event", boom)
 
     result = await AuditService(db_session).log(registered_user["id"], "scan.create")
     assert result is None
