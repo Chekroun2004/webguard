@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.api_keys import router as api_keys_router
+from app.api.v1.audit import router as audit_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.domains import router as domains_router
 from app.api.v1.reports import router as reports_router
@@ -20,3 +21,4 @@ api_v1_router.include_router(domains_router)
 api_v1_router.include_router(scheduled_router)
 api_v1_router.include_router(webhooks_router)
 api_v1_router.include_router(api_keys_router)
+api_v1_router.include_router(audit_router)
