@@ -109,15 +109,16 @@ class TestScanCreateEncryptsAuthConfig:
     async def test_no_auth_config_stores_null(self, client: AsyncClient, auth_headers: dict):
         from app.db.models.scan import Scan
 
-        resp = await client.post(
-            SCANS,
-            json={"url": "https://example.com"},
-            headers=auth_headers,
-        )
+        # No Redis in CI → mock the Celery dispatch.
+        with patch("app.api.v1.scans.run_scan_task.delay"):
+            resp = await client.post(
+                SCANS,
+                json={"url": "https://example.com"},
+                headers=auth_headers,
+            )
         assert resp.status_code == 202
         scan_id = resp.json()["id"]
 
-        # Read via the same app engine the test client uses
         from app.api.deps import get_db
         from app.main import app
 
@@ -133,18 +134,19 @@ class TestScanCreateEncryptsAuthConfig:
         from app.core.crypto import decrypt_json
         from app.db.models.scan import Scan
 
-        resp = await client.post(
-            SCANS,
-            json={
-                "url": "https://example.com",
-                "auth_config": {
-                    "strategy": "cookie",
-                    "name": "session",
-                    "value": "secret-token",
+        with patch("app.api.v1.scans.run_scan_task.delay"):
+            resp = await client.post(
+                SCANS,
+                json={
+                    "url": "https://example.com",
+                    "auth_config": {
+                        "strategy": "cookie",
+                        "name": "session",
+                        "value": "secret-token",
+                    },
                 },
-            },
-            headers=auth_headers,
-        )
+                headers=auth_headers,
+            )
         assert resp.status_code == 202
         scan_id = resp.json()["id"]
 
@@ -155,7 +157,6 @@ class TestScanCreateEncryptsAuthConfig:
         async for session in override():
             scan = (await session.execute(select(Scan).where(Scan.id == scan_id))).scalar_one()
             assert scan.auth_config_encrypted is not None
-            # Ciphertext must not leak the plaintext
             assert "secret-token" not in scan.auth_config_encrypted
             assert decrypt_json(scan.auth_config_encrypted) == {
                 "strategy": "cookie",
