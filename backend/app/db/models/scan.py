@@ -30,6 +30,7 @@ class Scan(Base):
         DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    auth_config_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Relationships
     user: Mapped[User] = relationship("User", back_populates="scans")
