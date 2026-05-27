@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ExternalLink, Loader2, LogOut, ShieldCheck } from "lucide-react";
 
 import { useCurrentUser, useLogout } from "@/hooks/useAuth";
-import { useCreateScan, useScanList } from "@/hooks/useScan";
+import { useCreateScan, useScanList, type ScanAuthConfig } from "@/hooks/useScan";
 import { useScanEvents } from "@/hooks/useScanEvents";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { ScanProgressBar } from "@/components/ScanProgressBar";
@@ -13,17 +13,26 @@ import type { Scan } from "@/types";
 
 // ── Scan form ─────────────────────────────────────────────────────────────────
 
+type AuthMode = "none" | "cookie" | "form_login";
+
 function ScanForm() {
   const [url, setUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [activeScanId, setActiveScanId] = useState<number | null>(null);
 
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>("none");
+  const [cookieName, setCookieName] = useState("");
+  const [cookieValue, setCookieValue] = useState("");
+  const [loginUrl, setLoginUrl] = useState("");
+  const [usernameField, setUsernameField] = useState("username");
+  const [passwordField, setPasswordField] = useState("password");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
   const createScan = useCreateScan();
-  // Subscribe to SSE for the currently running scan
   const liveStatus = useScanEvents(activeScanId);
 
-  // Clear the active scan a moment after it reaches a terminal state so the
-  // hook resets and the form is no longer blocked by stale status.
   useEffect(() => {
     if (liveStatus === "completed" || liveStatus === "failed") {
       const timer = setTimeout(() => setActiveScanId(null), 2500);
@@ -31,11 +40,28 @@ function ScanForm() {
     }
   }, [liveStatus]);
 
+  const buildAuthConfig = (): ScanAuthConfig | undefined => {
+    if (authMode === "cookie") {
+      return { strategy: "cookie", name: cookieName, value: cookieValue };
+    }
+    if (authMode === "form_login") {
+      return {
+        strategy: "form_login",
+        login_url: loginUrl,
+        username_field: usernameField,
+        password_field: passwordField,
+        username,
+        password,
+      };
+    }
+    return undefined;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     try {
-      const scan = await createScan.mutateAsync(url);
+      const scan = await createScan.mutateAsync({ url, auth_config: buildAuthConfig() });
       setUrl("");
       setActiveScanId(scan.id);
     } catch (err) {
@@ -43,7 +69,8 @@ function ScanForm() {
     }
   };
 
-  const displayStatus = liveStatus;
+  const disabled =
+    createScan.isPending || liveStatus === "pending" || liveStatus === "running";
 
   return (
     <div className="rounded-lg border bg-card p-6 space-y-4">
@@ -51,34 +78,150 @@ function ScanForm() {
       {error && (
         <p className="text-sm text-destructive rounded-md bg-destructive/10 px-3 py-2">{error}</p>
       )}
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <input
-          type="url"
-          required
-          placeholder="https://example.com"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          disabled={createScan.isPending || liveStatus === "pending" || liveStatus === "running"}
-          className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-        />
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div className="flex gap-2">
+          <input
+            type="url"
+            required
+            placeholder="https://example.com"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            disabled={disabled}
+            className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+          />
+          <button
+            type="submit"
+            disabled={disabled}
+            className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-1.5"
+          >
+            {createScan.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Envoi…
+              </>
+            ) : (
+              "Scanner"
+            )}
+          </button>
+        </div>
+
         <button
-          type="submit"
-          disabled={createScan.isPending || liveStatus === "pending" || liveStatus === "running"}
-          className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-1.5"
+          type="button"
+          onClick={() => setAuthOpen((v) => !v)}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          aria-expanded={authOpen}
         >
-          {createScan.isPending ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Envoi…
-            </>
-          ) : (
-            "Scanner"
-          )}
+          {authOpen ? "▾" : "▸"} Authentification (optionnel)
         </button>
+
+        {authOpen && (
+          <div className="space-y-3 rounded-md border border-dashed p-3 bg-muted/30">
+            <div className="flex gap-3 text-sm">
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="radio"
+                  name="authMode"
+                  checked={authMode === "none"}
+                  onChange={() => setAuthMode("none")}
+                />
+                Aucune
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="radio"
+                  name="authMode"
+                  checked={authMode === "cookie"}
+                  onChange={() => setAuthMode("cookie")}
+                />
+                Cookie de session
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="radio"
+                  name="authMode"
+                  checked={authMode === "form_login"}
+                  onChange={() => setAuthMode("form_login")}
+                />
+                Login form
+              </label>
+            </div>
+
+            {authMode === "cookie" && (
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  required
+                  placeholder="Nom (ex: session)"
+                  value={cookieName}
+                  onChange={(e) => setCookieName(e.target.value)}
+                  className="rounded-md border bg-background px-3 py-2 text-sm"
+                />
+                <input
+                  type="text"
+                  required
+                  placeholder="Valeur"
+                  value={cookieValue}
+                  onChange={(e) => setCookieValue(e.target.value)}
+                  className="rounded-md border bg-background px-3 py-2 text-sm font-mono"
+                />
+              </div>
+            )}
+
+            {authMode === "form_login" && (
+              <div className="space-y-2">
+                <input
+                  type="url"
+                  required
+                  placeholder="URL du login (ex: https://example.com/login)"
+                  value={loginUrl}
+                  onChange={(e) => setLoginUrl(e.target.value)}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    required
+                    placeholder="Nom du champ user"
+                    value={usernameField}
+                    onChange={(e) => setUsernameField(e.target.value)}
+                    className="rounded-md border bg-background px-3 py-2 text-sm font-mono"
+                  />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Nom du champ password"
+                    value={passwordField}
+                    onChange={(e) => setPasswordField(e.target.value)}
+                    className="rounded-md border bg-background px-3 py-2 text-sm font-mono"
+                  />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Identifiant"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="rounded-md border bg-background px-3 py-2 text-sm"
+                  />
+                  <input
+                    type="password"
+                    required
+                    placeholder="Mot de passe"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="rounded-md border bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Les identifiants sont chiffrés (Fernet) avant d'être stockés.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </form>
 
-      {activeScanId && displayStatus && displayStatus !== "completed" && (
-        <ScanProgressBar status={displayStatus} />
+      {activeScanId && liveStatus && liveStatus !== "completed" && (
+        <ScanProgressBar status={liveStatus} />
       )}
       {liveStatus === "failed" && (
         <p className="text-sm text-destructive">Le scan a échoué. Réessaie.</p>
