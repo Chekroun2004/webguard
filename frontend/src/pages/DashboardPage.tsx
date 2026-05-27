@@ -244,6 +244,12 @@ export function DashboardPage() {
             >
               Scans planifiés
             </Link>
+            <Link
+              to="/webhooks"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Webhooks
+            </Link>
             <ThemeToggle />
             <button
               onClick={logout}
