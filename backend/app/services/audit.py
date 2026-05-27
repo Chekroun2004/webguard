@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 ACTIONS: frozenset[str] = frozenset({
     "scan.create",
-    "scan.delete",
     "scheduled.create",
     "scheduled.update",
     "scheduled.delete",

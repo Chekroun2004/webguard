@@ -9,7 +9,6 @@ from pydantic import BaseModel, ConfigDict
 
 AuditAction = Literal[
     "scan.create",
-    "scan.delete",
     "scheduled.create",
     "scheduled.update",
     "scheduled.delete",

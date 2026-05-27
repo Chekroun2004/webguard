@@ -11,10 +11,15 @@ GET  /api/v1/scans/{id}/events → SSE stream
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from httpx import AsyncClient
+from sqlalchemy import select
+
+from app.db.models.audit_event import AuditEvent
 
 
 class TestCreateScan:
-    async def test_returns_202_with_pending_status(self, client: AsyncClient, auth_headers: dict):
+    async def test_returns_202_with_pending_status(
+        self, client: AsyncClient, auth_headers: dict, db_session
+    ):
         with patch("app.api.v1.scans.run_scan_task.delay"):
             resp = await client.post(
                 "/api/v1/scans",
@@ -26,6 +31,13 @@ class TestCreateScan:
         assert "id" in data
         assert data["status"] == "pending"
         assert data["findings"] == []
+
+        events = (await db_session.execute(
+            select(AuditEvent).where(AuditEvent.action == "scan.create")
+        )).scalars().all()
+        assert len(events) == 1
+        assert events[0].status == "success"
+        assert events[0].target_id == resp.json()["id"]
 
     async def test_dispatches_celery_task_with_scan_id(
         self, client: AsyncClient, auth_headers: dict

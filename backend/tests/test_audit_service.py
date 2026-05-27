@@ -76,4 +76,4 @@ async def test_log_swallows_db_errors_returning_none(db_session, registered_user
 
 
 def test_actions_set_size_matches_spec():
-    assert len(ACTIONS) == 14
+    assert len(ACTIONS) == 13

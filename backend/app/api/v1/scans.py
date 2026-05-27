@@ -22,6 +22,7 @@ from app.db.models.user import User
 from app.db.session import AsyncSessionLocal, get_db
 from app.repositories.scan import get_scan_by_id
 from app.schemas.scan import ScanCreate, ScanOut, VulnerabilityOut
+from app.services.audit import AuditService
 from app.services.scan import ScanForbiddenError, ScanNotFoundError, ScanService
 from app.workers.tasks.scan import run_scan_task
 
@@ -88,6 +89,11 @@ async def create_scan(
         run_scan_task.delay(scan.id)
     else:
         background_tasks.add_task(_run_scan_in_process, scan.id)
+    await AuditService(db).log(
+        current_user.id, "scan.create",
+        target_type="scan", target_id=scan.id,
+        status="success", request=request,
+    )
     return _to_out(scan)
 
 
