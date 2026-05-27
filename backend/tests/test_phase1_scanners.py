@@ -175,7 +175,7 @@ class TestSensitiveFilesScanner:
     async def test_exposed_git_head_flagged(self):
         scanner = SensitiveFilesScanner()
 
-        async def mock_check(url: str) -> int:
+        async def mock_check(url: str, **_kwargs) -> int:
             return 200 if ".git" in url else 404
 
         with patch.object(scanner, "_check_path", side_effect=mock_check):
@@ -186,7 +186,7 @@ class TestSensitiveFilesScanner:
     async def test_exposed_env_file_flagged(self):
         scanner = SensitiveFilesScanner()
 
-        async def mock_check(url: str) -> int:
+        async def mock_check(url: str, **_kwargs) -> int:
             return 200 if ".env" in url else 404
 
         with patch.object(scanner, "_check_path", side_effect=mock_check):

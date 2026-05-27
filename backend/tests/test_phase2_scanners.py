@@ -117,7 +117,7 @@ class TestCrawler:
     async def test_follows_internal_links(self):
         crawler = Crawler()
 
-        async def mock_fetch(url: str) -> dict:
+        async def mock_fetch(url: str, **_kwargs) -> dict:
             if url == "https://example.com/":
                 return {"status": 200, "html": HTML_LINKS, "headers": {}}
             return _empty_page(url)
@@ -134,7 +134,7 @@ class TestCrawler:
     async def test_ignores_external_links(self):
         crawler = Crawler()
 
-        async def mock_fetch(url: str) -> dict:
+        async def mock_fetch(url: str, **_kwargs) -> dict:
             if "evil.com" in url:
                 pytest.fail(f"Should not fetch external URL: {url}")
             return {"status": 200, "html": HTML_LINKS, "headers": {}}
@@ -179,7 +179,7 @@ class TestCrawler:
         crawler = Crawler()
         html_with_admin = '<html><body><a href="/admin/">Admin</a></body></html>'
 
-        async def mock_fetch(url: str) -> dict:
+        async def mock_fetch(url: str, **_kwargs) -> dict:
             if "/admin/" in url:
                 pytest.fail(f"Should not crawl disallowed URL: {url}")
             return {"status": 200, "html": html_with_admin, "headers": {}}
@@ -201,7 +201,7 @@ class TestXssScanner:
         scanner = XssScanner()
         page = _make_page(forms=[_make_form()])
 
-        async def mock_submit(action, method, data):
+        async def mock_submit(action, method, data, **_kwargs):
             payload = next(iter(data.values()))
             return {"status": 200, "body": f"Results for {payload}"}
 
@@ -213,7 +213,7 @@ class TestXssScanner:
         scanner = XssScanner()
         page = _make_page(forms=[_make_form()])
 
-        async def mock_submit(action, method, data):
+        async def mock_submit(action, method, data, **_kwargs):
             return {"status": 200, "body": "No results found."}
 
         with patch.object(scanner, "_submit_form", side_effect=mock_submit):
@@ -230,7 +230,7 @@ class TestXssScanner:
         scanner = XssScanner()
         page = _make_page(forms=[_make_form()])
 
-        async def mock_submit(action, method, data):
+        async def mock_submit(action, method, data, **_kwargs):
             payload = next(iter(data.values()))
             return {"status": 200, "body": payload}
 
@@ -249,7 +249,7 @@ class TestXssScanner:
         page = _make_page(forms=[form])
         call_count = 0
 
-        async def mock_submit(action, method, data):
+        async def mock_submit(action, method, data, **_kwargs):
             nonlocal call_count
             call_count += 1
             return {"status": 200, "body": "safe"}
@@ -267,7 +267,7 @@ class TestSqliScanner:
         scanner = SqliScanner()
         page = _make_page(forms=[_make_form()])
 
-        async def mock_submit(action, method, data):
+        async def mock_submit(action, method, data, **_kwargs):
             return {
                 "status": 500,
                 "body": "You have an error in your SQL syntax near ''",
@@ -281,7 +281,7 @@ class TestSqliScanner:
         scanner = SqliScanner()
         page = _make_page(forms=[_make_form()])
 
-        async def mock_submit(action, method, data):
+        async def mock_submit(action, method, data, **_kwargs):
             return {"status": 200, "body": "Everything is fine."}
 
         with patch.object(scanner, "_submit_form", side_effect=mock_submit):
@@ -298,7 +298,7 @@ class TestSqliScanner:
         scanner = SqliScanner()
         page = _make_page(forms=[_make_form()])
 
-        async def mock_submit(action, method, data):
+        async def mock_submit(action, method, data, **_kwargs):
             return {"status": 200, "body": "ORA-00933: SQL command not properly ended"}
 
         with patch.object(scanner, "_submit_form", side_effect=mock_submit):
@@ -309,7 +309,7 @@ class TestSqliScanner:
         scanner = SqliScanner()
         page = _make_page(forms=[_make_form()])
 
-        async def mock_submit(action, method, data):
+        async def mock_submit(action, method, data, **_kwargs):
             return {"status": 200, "body": "SQLSTATE[42000]: Syntax error"}
 
         with patch.object(scanner, "_submit_form", side_effect=mock_submit):
@@ -324,7 +324,7 @@ class TestOpenRedirectScanner:
     async def test_external_redirect_flagged(self):
         scanner = OpenRedirectScanner()
 
-        async def mock_fetch(url: str) -> dict:
+        async def mock_fetch(url: str, **_kwargs) -> dict:
             return {
                 "status": 302,
                 "headers": {"location": "https://evil.com/"},
@@ -348,7 +348,7 @@ class TestOpenRedirectScanner:
     async def test_internal_redirect_not_flagged(self):
         scanner = OpenRedirectScanner()
 
-        async def mock_fetch(url: str) -> dict:
+        async def mock_fetch(url: str, **_kwargs) -> dict:
             return {
                 "status": 302,
                 "headers": {"location": "https://example.com/home"},
@@ -365,7 +365,7 @@ class TestOpenRedirectScanner:
         scanner = OpenRedirectScanner()
         probed_urls: list[str] = []
 
-        async def mock_fetch(url: str) -> dict:
+        async def mock_fetch(url: str, **_kwargs) -> dict:
             probed_urls.append(url)
             return {"status": 200, "headers": {}, "body": "", "final_url": url}
 
@@ -495,7 +495,7 @@ class TestDirectoryListingScanner:
         scanner = DirectoryListingScanner()
         checked: list[str] = []
 
-        async def mock_check(url: str) -> dict:
+        async def mock_check(url: str, **_kwargs) -> dict:
             checked.append(url)
             return {"status": 403, "body": ""}
 
