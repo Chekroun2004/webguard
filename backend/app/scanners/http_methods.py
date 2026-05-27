@@ -19,8 +19,10 @@ DANGEROUS_METHODS: dict[str, str] = {
 
 
 class HttpMethodsScanner(BaseScanner):
-    async def _options(self, url: str) -> dict:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
+    async def _options(self, url: str, cookies: dict[str, str] | None = None) -> dict:
+        async with httpx.AsyncClient(
+            follow_redirects=True, timeout=10, cookies=cookies or {}
+        ) as client:
             try:
                 resp = await client.options(url)
                 allow = resp.headers.get("allow", "")
@@ -29,7 +31,7 @@ class HttpMethodsScanner(BaseScanner):
                 return {"status": 0, "allow": ""}
 
     async def scan(self, url: str, config: dict) -> list[Finding]:
-        result = await self._options(url)
+        result = await self._options(url, cookies=config.get("cookies"))
         findings: list[Finding] = []
 
         if result["status"] not in (200, 204):

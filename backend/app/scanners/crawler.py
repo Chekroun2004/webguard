@@ -30,8 +30,13 @@ class CrawledPage:
 
 
 class Crawler:
+    def __init__(self) -> None:
+        self._cookies: dict[str, str] = {}
+
     async def _fetch_page(self, url: str) -> dict:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+        async with httpx.AsyncClient(
+            follow_redirects=True, timeout=15, cookies=self._cookies
+        ) as client:
             try:
                 resp = await client.get(url)
                 return {
@@ -44,7 +49,9 @@ class Crawler:
 
     async def _fetch_robots(self, base_url: str) -> str:
         robots_url = base_url.rstrip("/") + "/robots.txt"
-        async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
+        async with httpx.AsyncClient(
+            follow_redirects=True, timeout=10, cookies=self._cookies
+        ) as client:
             try:
                 resp = await client.get(robots_url)
                 if resp.status_code == 200:
@@ -56,6 +63,7 @@ class Crawler:
     async def crawl(self, start_url: str, config: dict) -> list[CrawledPage]:
         max_depth: int = config.get("max_depth", 2)
         max_pages: int = config.get("max_pages", 50)
+        self._cookies = config.get("cookies") or {}
 
         parsed = urlparse(start_url)
         base_origin = f"{parsed.scheme}://{parsed.netloc}"

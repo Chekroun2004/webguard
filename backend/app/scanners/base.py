@@ -31,12 +31,15 @@ class Finding:
 class BaseScanner(ABC):
     """Base class all scanners inherit from."""
 
-    async def _fetch(self, url: str) -> dict:
+    async def _fetch(self, url: str, cookies: dict[str, str] | None = None) -> dict:
         """Perform an HTTP GET and return a normalised response dict.
 
         Override in tests via patch.object(scanner, '_fetch', AsyncMock(...)).
+        ``cookies`` allows authenticated scanners to reuse a session.
         """
-        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+        async with httpx.AsyncClient(
+            follow_redirects=True, timeout=15, cookies=cookies or {}
+        ) as client:
             resp = await client.get(url)
             return {
                 "status": resp.status_code,

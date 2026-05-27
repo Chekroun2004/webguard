@@ -13,8 +13,12 @@ from app.scanners.base import BaseScanner, Finding
 
 
 class CookiesScanner(BaseScanner):
-    async def _fetch(self, url: str) -> dict:  # type: ignore[override]
-        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+    async def _fetch(  # type: ignore[override]
+        self, url: str, cookies: dict[str, str] | None = None
+    ) -> dict:
+        async with httpx.AsyncClient(
+            follow_redirects=True, timeout=15, cookies=cookies or {}
+        ) as client:
             resp = await client.get(url)
             return {
                 "status": resp.status_code,
@@ -24,7 +28,7 @@ class CookiesScanner(BaseScanner):
             }
 
     async def scan(self, url: str, config: dict) -> list[Finding]:
-        response = await self._fetch(url)
+        response = await self._fetch(url, cookies=config.get("cookies"))
         findings: list[Finding] = []
         for raw in response.get("set_cookies", []):
             findings.extend(self._check_cookie(raw))

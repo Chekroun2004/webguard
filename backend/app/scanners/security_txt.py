@@ -24,9 +24,13 @@ def _base_url(url: str) -> str:
 
 
 class SecurityTxtScanner(BaseScanner):
-    async def _fetch(self, url: str) -> dict:  # type: ignore[override]
+    async def _fetch(  # type: ignore[override]
+        self, url: str, cookies: dict[str, str] | None = None
+    ) -> dict:
         target = _base_url(url).rstrip("/") + SECURITY_TXT_PATH
-        async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
+        async with httpx.AsyncClient(
+            follow_redirects=True, timeout=10, cookies=cookies or {}
+        ) as client:
             resp = await client.get(target)
             return {
                 "status": resp.status_code,
@@ -37,7 +41,7 @@ class SecurityTxtScanner(BaseScanner):
 
     async def scan(self, url: str, config: dict) -> list[Finding]:
         try:
-            response = await self._fetch(url)
+            response = await self._fetch(url, cookies=config.get("cookies"))
         except Exception:
             # Network errors are not a security finding per se — stay silent.
             return []

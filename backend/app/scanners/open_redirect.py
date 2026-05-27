@@ -37,8 +37,12 @@ PROBE_URL = "https://example-evil-redirect.com/"
 
 
 class OpenRedirectScanner(BaseScanner):
-    async def _fetch(self, url: str) -> dict:  # type: ignore[override]
-        async with httpx.AsyncClient(follow_redirects=False, timeout=10) as client:
+    async def _fetch(  # type: ignore[override]
+        self, url: str, cookies: dict[str, str] | None = None
+    ) -> dict:
+        async with httpx.AsyncClient(
+            follow_redirects=False, timeout=10, cookies=cookies or {}
+        ) as client:
             try:
                 resp = await client.get(url)
                 return {
@@ -51,6 +55,7 @@ class OpenRedirectScanner(BaseScanner):
                 return {"status": 0, "headers": {}, "body": "", "final_url": url}
 
     async def scan(self, url: str, config: dict) -> list[Finding]:
+        cookies = config.get("cookies")
         pages: list[CrawledPage] = config.get("pages", [])
         if not pages:
             crawler = Crawler()
@@ -80,7 +85,7 @@ class OpenRedirectScanner(BaseScanner):
                             "",
                         )
                     )
-                    result = await self._fetch(probe_url)
+                    result = await self._fetch(probe_url, cookies=cookies)
                     location = result["headers"].get("location", "")
                     final = result.get("final_url", "")
 

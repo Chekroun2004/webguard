@@ -26,7 +26,7 @@ DISCLOSURE_HEADERS = [
 
 class TechnologiesScanner(BaseScanner):
     async def scan(self, url: str, config: dict) -> list[Finding]:
-        response = await self._fetch(url)
+        response = await self._fetch(url, cookies=config.get("cookies"))
         headers: dict[str, str] = {k.title(): v for k, v in response["headers"].items()}
         findings: list[Finding] = []
 

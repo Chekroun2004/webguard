@@ -31,8 +31,10 @@ SENSITIVE_PATHS = [
 
 
 class SensitiveFilesScanner(BaseScanner):
-    async def _check_path(self, url: str) -> int:
-        async with httpx.AsyncClient(follow_redirects=False, timeout=10) as client:
+    async def _check_path(self, url: str, cookies: dict[str, str] | None = None) -> int:
+        async with httpx.AsyncClient(
+            follow_redirects=False, timeout=10, cookies=cookies or {}
+        ) as client:
             try:
                 resp = await client.get(url)
                 return resp.status_code
@@ -40,12 +42,13 @@ class SensitiveFilesScanner(BaseScanner):
                 return 0
 
     async def scan(self, url: str, config: dict) -> list[Finding]:
+        cookies = config.get("cookies")
         base = url.rstrip("/")
         findings: list[Finding] = []
 
         for path in SENSITIVE_PATHS:
             target = base + path
-            status = await self._check_path(target)
+            status = await self._check_path(target, cookies=cookies)
             if status == 200:
                 findings.append(
                     Finding(

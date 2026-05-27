@@ -106,9 +106,23 @@ async def execute_scan(scan_id: int, session: AsyncSession) -> None:
     try:
         url = str(scan.url)
 
+        # Resolve auth cookies once if the scan was created with auth_config
+        auth_cookies: dict[str, str] = {}
+        if scan.auth_config_encrypted:
+            from app.core.crypto import DecryptionError, decrypt_json
+            from app.services.scan_auth import prepare_auth_cookies
+
+            try:
+                auth_config = decrypt_json(scan.auth_config_encrypted)
+                auth_cookies = await prepare_auth_cookies(auth_config)
+            except DecryptionError:
+                auth_cookies = {}
+
+        base_config: dict = {"cookies": auth_cookies}
+
         # Phase 1 — passive scanners (no crawl needed)
         passive_results = await asyncio.gather(
-            *[cls().scan(url, {}) for cls in SCANNERS],
+            *[cls().scan(url, base_config) for cls in SCANNERS],
             return_exceptions=True,
         )
 
@@ -119,11 +133,11 @@ async def execute_scan(scan_id: int, session: AsyncSession) -> None:
         # Phase 2 — crawl then run active scanners
         crawler = Crawler()
         try:
-            pages = await crawler.crawl(url, {})
+            pages = await crawler.crawl(url, base_config)
         except Exception:
             pages = []
 
-        active_config = {"pages": pages}
+        active_config = {**base_config, "pages": pages}
         active_results = await asyncio.gather(
             *[cls().scan(url, active_config) for cls in ACTIVE_SCANNERS],
             return_exceptions=True,

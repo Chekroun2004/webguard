@@ -26,7 +26,7 @@ class HeadersScanner(BaseScanner):
     ]
 
     async def scan(self, url: str, config: dict) -> list[Finding]:
-        response = await self._fetch(url)
+        response = await self._fetch(url, cookies=config.get("cookies"))
         # Normalize header keys to title-case for consistent lookup
         headers: dict[str, str] = {k.title(): v for k, v in response["headers"].items()}
 

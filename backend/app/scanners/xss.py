@@ -21,8 +21,16 @@ SAFE_INPUT_TYPES = {"hidden", "password", "file", "checkbox", "radio", "submit"}
 
 
 class XssScanner(BaseScanner):
-    async def _submit_form(self, action: str, method: str, data: dict) -> dict:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+    async def _submit_form(
+        self,
+        action: str,
+        method: str,
+        data: dict,
+        cookies: dict[str, str] | None = None,
+    ) -> dict:
+        async with httpx.AsyncClient(
+            follow_redirects=True, timeout=15, cookies=cookies or {}
+        ) as client:
             try:
                 if method == "post":
                     resp = await client.post(action, data=data)
@@ -33,6 +41,7 @@ class XssScanner(BaseScanner):
                 return {"status": 0, "body": ""}
 
     async def scan(self, url: str, config: dict) -> list[Finding]:
+        cookies = config.get("cookies")
         pages: list[CrawledPage] = config.get("pages", [])
         if not pages:
             crawler = Crawler()
@@ -49,7 +58,9 @@ class XssScanner(BaseScanner):
                     for payload in XSS_PAYLOADS:
                         data = {i["name"]: i["value"] for i in form.inputs}
                         data[inp["name"]] = payload
-                        result = await self._submit_form(form.action, form.method, data)
+                        result = await self._submit_form(
+                            form.action, form.method, data, cookies=cookies
+                        )
                         if payload in result.get("body", ""):
                             key = f"{form.action}:{inp['name']}"
                             if key not in seen:

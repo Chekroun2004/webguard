@@ -24,8 +24,12 @@ EVIL_ORIGIN = "https://evil.example.com"
 
 
 class CorsScanner(BaseScanner):
-    async def _fetch(self, url: str) -> dict:  # type: ignore[override]
-        async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
+    async def _fetch(  # type: ignore[override]
+        self, url: str, cookies: dict[str, str] | None = None
+    ) -> dict:
+        async with httpx.AsyncClient(
+            follow_redirects=True, timeout=10, cookies=cookies or {}
+        ) as client:
             resp = await client.get(url, headers={"Origin": EVIL_ORIGIN})
             return {
                 "status": resp.status_code,
@@ -34,7 +38,7 @@ class CorsScanner(BaseScanner):
             }
 
     async def scan(self, url: str, config: dict) -> list[Finding]:
-        response = await self._fetch(url)
+        response = await self._fetch(url, cookies=config.get("cookies"))
         headers = {k.lower(): v for k, v in response["headers"].items()}
 
         acao = headers.get("access-control-allow-origin")
