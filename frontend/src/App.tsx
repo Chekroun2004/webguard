@@ -8,6 +8,7 @@ import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { ScanDetailPage } from "@/pages/ScanDetailPage";
 import { ScheduledScansPage } from "@/pages/ScheduledScansPage";
+import { SecurityPage } from "@/pages/SecurityPage";
 import { WebhooksPage } from "@/pages/WebhooksPage";
 
 function App() {
@@ -44,6 +45,14 @@ function App() {
         element={
           <ProtectedRoute>
             <WebhooksPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/security"
+        element={
+          <ProtectedRoute>
+            <SecurityPage />
           </ProtectedRoute>
         }
       />

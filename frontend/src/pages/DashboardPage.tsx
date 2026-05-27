@@ -393,6 +393,12 @@ export function DashboardPage() {
             >
               Webhooks
             </Link>
+            <Link
+              to="/security"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Sécurité
+            </Link>
             <ThemeToggle />
             <button
               onClick={logout}
