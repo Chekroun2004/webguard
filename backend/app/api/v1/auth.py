@@ -2,7 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.deps import get_auth_service, get_current_user
 from app.db.models.user import User
-from app.schemas.auth import LoginRequest, RefreshRequest, TokenPair
+from app.schemas.auth import (
+    LoginRequest,
+    LoginResponse,
+    RefreshRequest,
+    TokenPair,
+    TotpLoginRequest,
+)
 from app.schemas.user import UserCreate, UserRead
 from app.services.auth import AuthService
 
@@ -21,13 +27,24 @@ async def register(
     return UserRead.model_validate(user)
 
 
-@router.post("/login", response_model=TokenPair)
+@router.post("/login", response_model=LoginResponse)
 async def login(
     data: LoginRequest,
     auth_service: AuthService = Depends(get_auth_service),
-) -> TokenPair:
+) -> LoginResponse:
     try:
         return await auth_service.login(data.email, data.password)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
+
+
+@router.post("/login/totp", response_model=TokenPair)
+async def login_totp(
+    data: TotpLoginRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+) -> TokenPair:
+    try:
+        return await auth_service.login_totp(data.pending_token, data.code)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 

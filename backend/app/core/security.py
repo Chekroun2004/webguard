@@ -39,6 +39,14 @@ def create_refresh_token(user_id: int) -> str:
     )
 
 
+def create_totp_pending_token(user_id: int) -> str:
+    """Short-lived (5 min) token issued after password check, before TOTP verify."""
+    return _create_token(
+        {"sub": str(user_id), "type": "totp_pending"},
+        timedelta(minutes=5),
+    )
+
+
 def decode_token(token: str, expected_type: str) -> int:
     """Decode a JWT and return the user_id.
 
