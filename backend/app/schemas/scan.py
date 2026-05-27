@@ -5,14 +5,37 @@ Pydantic v2 schemas for Scan and Vulnerability.
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import AnyHttpUrl, BaseModel, Field
+
+# ── Auth config ───────────────────────────────────────────────────────────────
+
+
+class CookieAuthConfig(BaseModel):
+    strategy: Literal["cookie"] = "cookie"
+    name: str = Field(min_length=1, max_length=128)
+    value: str = Field(min_length=1, max_length=4096)
+
+
+class FormLoginAuthConfig(BaseModel):
+    strategy: Literal["form_login"] = "form_login"
+    login_url: AnyHttpUrl
+    username_field: str = Field(min_length=1, max_length=128)
+    password_field: str = Field(min_length=1, max_length=128)
+    username: str = Field(min_length=1, max_length=256)
+    password: str = Field(min_length=1, max_length=256)
+
+
+AuthConfig = CookieAuthConfig | FormLoginAuthConfig
+
 
 # ── Request ──────────────────────────────────────────────────────────────────
 
 
 class ScanCreate(BaseModel):
     url: AnyHttpUrl
+    auth_config: AuthConfig | None = Field(default=None, discriminator="strategy")
 
 
 # ── Response fragments ────────────────────────────────────────────────────────

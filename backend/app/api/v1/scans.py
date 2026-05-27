@@ -75,7 +75,14 @@ async def create_scan(
     current_user: User = Depends(get_current_user),
 ) -> ScanOut:
     service = ScanService(db)
-    scan = await service.create_scan(user_id=current_user.id, url=str(body.url))
+    auth_payload = (
+        body.auth_config.model_dump(mode="json") if body.auth_config is not None else None
+    )
+    scan = await service.create_scan(
+        user_id=current_user.id,
+        url=str(body.url),
+        auth_config=auth_payload,
+    )
     # Dispatch async task AFTER the scan row is persisted
     if settings.use_celery:
         run_scan_task.delay(scan.id)

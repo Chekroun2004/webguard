@@ -16,9 +16,22 @@ class ScanService:
     def __init__(self, db: AsyncSession) -> None:
         self._db = db
 
-    async def create_scan(self, user_id: int, url: str) -> Scan:
+    async def create_scan(
+        self,
+        user_id: int,
+        url: str,
+        auth_config: dict | None = None,
+    ) -> Scan:
         """Create a pending scan. Task dispatch is handled by the route."""
-        return await scan_repo.create_pending_scan(self._db, user_id, url)
+        from app.core.crypto import encrypt_json
+
+        encrypted = encrypt_json(auth_config) if auth_config else None
+        return await scan_repo.create_pending_scan(
+            self._db,
+            user_id,
+            url,
+            auth_config_encrypted=encrypted,
+        )
 
     async def get_scan(self, scan_id: int, user_id: int) -> Scan:
         scan = await scan_repo.get_scan_by_id(self._db, scan_id)

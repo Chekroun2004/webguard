@@ -11,9 +11,19 @@ from sqlalchemy.orm import selectinload
 from app.db.models.scan import Scan
 
 
-async def create_pending_scan(db: AsyncSession, user_id: int, url: str) -> Scan:
+async def create_pending_scan(
+    db: AsyncSession,
+    user_id: int,
+    url: str,
+    auth_config_encrypted: str | None = None,
+) -> Scan:
     """Create a scan with status=pending (no findings yet — task not run)."""
-    scan = Scan(user_id=user_id, url=url, status="pending")
+    scan = Scan(
+        user_id=user_id,
+        url=url,
+        status="pending",
+        auth_config_encrypted=auth_config_encrypted,
+    )
     db.add(scan)
     await db.flush()
     await db.refresh(scan, ["vulnerabilities"])
