@@ -46,9 +46,10 @@ export function Sidebar() {
       )}
     >
       {/* Brand */}
-      <div
+      <Link
+        to="/dashboard"
         className={cn(
-          "flex items-center h-14 border-b shrink-0 px-4 gap-2.5",
+          "flex items-center h-14 border-b shrink-0 px-4 gap-2.5 hover:opacity-80 transition-opacity",
           collapsed && "justify-center px-0"
         )}
       >
@@ -60,7 +61,7 @@ export function Sidebar() {
             <span className="text-[#6366f1]">Web</span>Guard
           </span>
         )}
-      </div>
+      </Link>
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">

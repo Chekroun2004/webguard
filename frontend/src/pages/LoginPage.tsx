@@ -62,12 +62,12 @@ export function LoginPage() {
           <div className="animate-mesh-3 absolute top-1/2 left-1/3 h-[300px] w-[300px] rounded-full bg-indigo-500/10 blur-[60px]" />
         </div>
 
-        <div className="relative z-10 flex items-center gap-3">
+        <Link to="/dashboard" className="relative z-10 flex items-center gap-3 hover:opacity-80 transition-opacity">
           <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center">
             <ShieldAlert className="h-5 w-5 text-white" />
           </div>
           <span className="font-display font-bold text-xl tracking-tight">WebGuard</span>
-        </div>
+        </Link>
 
         <div className="relative z-10 space-y-5">
           <h2 className="font-display text-4xl font-bold leading-tight">
