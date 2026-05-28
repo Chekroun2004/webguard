@@ -37,7 +37,8 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen bg-card border-r transition-[width] duration-200 shrink-0 overflow-hidden",
+        "flex flex-col h-screen border-r transition-[width] duration-200 shrink-0 overflow-hidden",
+        "bg-card dark:bg-card/80 dark:backdrop-blur-xl dark:border-white/[0.07]",
         collapsed ? "w-16" : "w-[220px]"
       )}
     >
@@ -70,8 +71,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors",
                 active
-                  ? "bg-primary/10 text-primary font-medium"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  ? "bg-gradient-brand-r text-white font-medium shadow-glow-sm"
+                  : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
                 collapsed && "justify-center px-0 w-full"
               )}
             >

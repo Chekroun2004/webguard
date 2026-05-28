@@ -48,26 +48,55 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Left panel — brand */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-brand flex-col justify-between p-12 text-white">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+      {/* Left panel — animated mesh background */}
+      <div
+        className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-12 text-white border-r border-white/[0.06]"
+        style={{ background: "hsl(240 20% 4%)" }}
+      >
+        {/* Animated glow orbs */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="animate-mesh-1 absolute -top-32 -left-32 h-[500px] w-[500px] rounded-full bg-indigo-600/25 blur-[100px]" />
+          <div className="animate-mesh-2 absolute -bottom-32 right-0 h-[400px] w-[400px] rounded-full bg-violet-600/20 blur-[80px]" />
+          <div className="animate-mesh-3 absolute top-1/2 left-1/3 h-[300px] w-[300px] rounded-full bg-indigo-500/10 blur-[60px]" />
+        </div>
+
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center">
             <ShieldAlert className="h-5 w-5 text-white" />
           </div>
-          <span className="font-bold text-xl tracking-tight">WebGuard</span>
+          <span className="font-display font-bold text-xl tracking-tight">WebGuard</span>
         </div>
 
-        <div className="space-y-4">
-          <h2 className="text-3xl font-bold leading-tight">
-            Détectez les failles de sécurité avant que les attaquants ne le fassent.
+        <div className="relative z-10 space-y-5">
+          <h2 className="font-display text-4xl font-bold leading-tight">
+            Détectez les failles avant que les attaquants ne le fassent.
           </h2>
-          <p className="text-white/70 text-sm leading-relaxed">
-            13 scanners actifs et passifs. Rapports PDF. Scans planifiés. Webhooks. Authentification
-            à deux facteurs. Tout ce qu'il faut pour sécuriser votre surface d'attaque web.
+          <p className="text-white/60 text-sm leading-relaxed max-w-sm">
+            13 scanners actifs et passifs. Rapports PDF. Scans planifiés. Webhooks Slack/Discord.
+            Authentification à deux facteurs. Tout ce qu'il faut pour sécuriser votre surface
+            d'attaque web.
           </p>
+          <div className="flex gap-6 pt-2">
+            <div>
+              <p className="text-2xl font-display font-bold">13</p>
+              <p className="text-white/50 text-xs mt-0.5">Scanners</p>
+            </div>
+            <div className="w-px bg-white/10" />
+            <div>
+              <p className="text-2xl font-display font-bold">PDF</p>
+              <p className="text-white/50 text-xs mt-0.5">Rapports</p>
+            </div>
+            <div className="w-px bg-white/10" />
+            <div>
+              <p className="text-2xl font-display font-bold">2FA</p>
+              <p className="text-white/50 text-xs mt-0.5">Sécurisé</p>
+            </div>
+          </div>
         </div>
 
-        <p className="text-white/40 text-xs">WebGuard — Portfolio Master IGOV · FSR-UM5 Rabat</p>
+        <p className="relative z-10 text-white/30 text-xs">
+          WebGuard — Portfolio Master IGOV · FSR-UM5 Rabat
+        </p>
       </div>
 
       {/* Right panel — form */}
