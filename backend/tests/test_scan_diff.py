@@ -128,3 +128,39 @@ class TestScanDiff:
             f"/api/v1/scans/diff?old={old_id}&new={new_id}", headers=auth_headers
         )
         assert resp.status_code == 200
+
+
+class TestScanDiffPdf:
+    async def test_returns_pdf(
+        self, client: AsyncClient, auth_headers: dict, db_session: AsyncSession
+    ):
+        from unittest.mock import patch
+
+        user_id = await _user_id(client, auth_headers)
+        old_id = await _create_scan_with_findings(
+            db_session, user_id, "https://pdf.com", [("Old Bug", "high", "")]
+        )
+        new_id = await _create_scan_with_findings(
+            db_session, user_id, "https://pdf.com", [("New Bug", "medium", "")]
+        )
+        with patch("app.api.v1.scan_diff.HTML") as mock_html:
+            mock_html.return_value.write_pdf.return_value = b"%PDF-1.4 fake"
+            resp = await client.get(
+                f"/api/v1/scans/diff/report.pdf?old={old_id}&new={new_id}",
+                headers=auth_headers,
+            )
+        assert resp.status_code == 200
+        assert "application/pdf" in resp.headers["content-type"]
+        assert f"webguard-diff-{old_id}-vs-{new_id}.pdf" in resp.headers["content-disposition"]
+
+    async def test_pdf_requires_auth(self, client: AsyncClient):
+        resp = await client.get("/api/v1/scans/diff/report.pdf?old=1&new=2")
+        assert resp.status_code == 401
+
+    async def test_pdf_returns_404_for_unknown_scan(
+        self, client: AsyncClient, auth_headers: dict
+    ):
+        resp = await client.get(
+            "/api/v1/scans/diff/report.pdf?old=99997&new=99996", headers=auth_headers
+        )
+        assert resp.status_code == 404

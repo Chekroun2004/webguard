@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Rapport de comparaison WebGuard — {{ diff.url }}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 13px; color: #1a1a2e; background: #fff; }
+
+  /* Cover */
+  .cover { padding: 60px 50px 40px; border-bottom: 4px solid #6366f1; margin-bottom: 32px; }
+  .cover-logo { font-size: 22px; font-weight: 800; color: #6366f1; letter-spacing: -0.5px; }
+  .cover-logo span { color: #1a1a2e; }
+  .cover h1 { font-size: 26px; font-weight: 700; margin-top: 24px; color: #1a1a2e; }
+  .cover-url { font-size: 14px; color: #6b7280; margin-top: 6px; word-break: break-all; }
+  .cover-meta { display: flex; gap: 40px; margin-top: 20px; flex-wrap: wrap; }
+  .cover-meta-group { }
+  .cover-meta dt { font-size: 11px; text-transform: uppercase; color: #9ca3af; letter-spacing: 0.5px; }
+  .cover-meta dd { font-size: 13px; font-weight: 600; color: #374151; margin-top: 2px; }
+
+  /* Section */
+  .section { padding: 0 50px; margin-bottom: 28px; }
+  .section-title { font-size: 15px; font-weight: 700; color: #374151; margin-bottom: 14px; padding-bottom: 6px; border-bottom: 1px solid #e5e7eb; }
+
+  /* Summary */
+  .summary-grid { display: flex; gap: 12px; }
+  .summary-card { flex: 1; border-radius: 8px; padding: 14px 16px; text-align: center; }
+  .summary-card .count { font-size: 28px; font-weight: 800; }
+  .summary-card .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+  .diff-added   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  .diff-removed { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+  .diff-unchanged { background: #f9fafb; color: #374151; border: 1px solid #e5e7eb; }
+
+  /* Section heading with color */
+  .section-title-added   { color: #b91c1c; border-color: #fecaca; }
+  .section-title-removed { color: #15803d; border-color: #bbf7d0; }
+  .section-title-unchanged { color: #6b7280; border-color: #e5e7eb; }
+
+  /* Findings */
+  .finding { margin-bottom: 14px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; page-break-inside: avoid; }
+  .finding-added   { border-color: #fecaca; }
+  .finding-removed { border-color: #bbf7d0; }
+  .finding-header { padding: 10px 14px; display: flex; align-items: flex-start; gap: 10px; }
+  .finding-header-added   { background: #fef2f2; }
+  .finding-header-removed { background: #f0fdf4; }
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+  .badge-critical { background: #fee2e2; color: #b91c1c; }
+  .badge-high     { background: #ffedd5; color: #c2410c; }
+  .badge-medium   { background: #fef9c3; color: #a16207; }
+  .badge-low      { background: #dcfce7; color: #15803d; }
+  .badge-info     { background: #dbeafe; color: #1d4ed8; }
+  .finding-name { font-weight: 700; font-size: 13px; flex: 1; }
+  .diff-tag { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 3px; }
+  .diff-tag-added   { background: #fee2e2; color: #b91c1c; }
+  .diff-tag-removed { background: #dcfce7; color: #15803d; }
+  .finding-body { padding: 10px 14px; border-top: 1px solid #f3f4f6; font-size: 12px; }
+  .finding-body .row { margin-bottom: 6px; }
+  .finding-body .row-label { font-weight: 600; color: #6b7280; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .finding-body .row-val { margin-top: 2px; color: #374151; line-height: 1.5; }
+  .evidence { font-family: "Courier New", monospace; font-size: 11px; background: #f9fafb; padding: 6px 8px; border-radius: 4px; border: 1px solid #e5e7eb; word-break: break-all; }
+  .empty-section { text-align: center; padding: 20px; color: #9ca3af; font-size: 12px; background: #f9fafb; border-radius: 8px; }
+
+  /* Footer */
+  .footer { padding: 20px 50px 30px; border-top: 1px solid #e5e7eb; color: #9ca3af; font-size: 11px; display: flex; justify-content: space-between; margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="cover-logo">Web<span>Guard</span></div>
+  <h1>Rapport de comparaison</h1>
+  <div class="cover-url">{{ diff.url }}</div>
+  <div class="cover-meta">
+    <div class="cover-meta-group">
+      <dt>Scan de référence</dt>
+      <dd>#{{ diff.old_scan.id }} — {{ diff.old_scan.created_at_str }}</dd>
+    </div>
+    <div class="cover-meta-group">
+      <dt>Scan comparé</dt>
+      <dd>#{{ diff.new_scan.id }} — {{ diff.new_scan.created_at_str }}</dd>
+    </div>
+    <div class="cover-meta-group">
+      <dt>Rapport généré</dt>
+      <dd>{{ generated_date }}</dd>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Résumé de la comparaison</div>
+  <div class="summary-grid">
+    <div class="summary-card diff-added">
+      <div class="count">{{ diff.added | length }}</div>
+      <div class="label">Nouvelles vulnérabilités</div>
+    </div>
+    <div class="summary-card diff-removed">
+      <div class="count">{{ diff.removed | length }}</div>
+      <div class="label">Vulnérabilités corrigées</div>
+    </div>
+    <div class="summary-card diff-unchanged">
+      <div class="count">{{ diff.unchanged | length }}</div>
+      <div class="label">Inchangées</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title section-title-added">Nouvelles vulnérabilités ({{ diff.added | length }})</div>
+  {% if diff.added %}
+    {% for f in diff.added %}
+    <div class="finding finding-added">
+      <div class="finding-header finding-header-added">
+        <span class="badge badge-{{ f.severity }}">{{ f.severity }}</span>
+        <span class="finding-name">{{ f.name }}</span>
+        <span class="diff-tag diff-tag-added">NOUVEAU</span>
+      </div>
+      <div class="finding-body">
+        <div class="row">
+          <div class="row-label">Description</div>
+          <div class="row-val">{{ f.description }}</div>
+        </div>
+        {% if f.recommendation %}
+        <div class="row">
+          <div class="row-label">Recommandation</div>
+          <div class="row-val">{{ f.recommendation }}</div>
+        </div>
+        {% endif %}
+        {% if f.evidence %}
+        <div class="row">
+          <div class="row-label">Preuve</div>
+          <div class="row-val"><div class="evidence">{{ f.evidence }}</div></div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-section">Aucune nouvelle vulnérabilité — bonne nouvelle !</div>
+  {% endif %}
+</div>
+
+<div class="section">
+  <div class="section-title section-title-removed">Vulnérabilités corrigées ({{ diff.removed | length }})</div>
+  {% if diff.removed %}
+    {% for f in diff.removed %}
+    <div class="finding finding-removed">
+      <div class="finding-header finding-header-removed">
+        <span class="badge badge-{{ f.severity }}">{{ f.severity }}</span>
+        <span class="finding-name">{{ f.name }}</span>
+        <span class="diff-tag diff-tag-removed">CORRIGÉE</span>
+      </div>
+      <div class="finding-body">
+        <div class="row">
+          <div class="row-label">Description</div>
+          <div class="row-val">{{ f.description }}</div>
+        </div>
+        {% if f.recommendation %}
+        <div class="row">
+          <div class="row-label">Recommandation</div>
+          <div class="row-val">{{ f.recommendation }}</div>
+        </div>
+        {% endif %}
+        {% if f.evidence %}
+        <div class="row">
+          <div class="row-label">Preuve</div>
+          <div class="row-val"><div class="evidence">{{ f.evidence }}</div></div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-section">Aucune correction détectée.</div>
+  {% endif %}
+</div>
+
+{% if diff.unchanged %}
+<div class="section">
+  <div class="section-title section-title-unchanged">Vulnérabilités inchangées ({{ diff.unchanged | length }})</div>
+  {% for f in diff.unchanged %}
+  <div class="finding">
+    <div class="finding-header">
+      <span class="badge badge-{{ f.severity }}">{{ f.severity }}</span>
+      <span class="finding-name">{{ f.name }}</span>
+    </div>
+    {% if f.evidence %}
+    <div class="finding-body">
+      <div class="row">
+        <div class="row-label">Preuve</div>
+        <div class="row-val"><div class="evidence">{{ f.evidence }}</div></div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="footer">
+  <span>WebGuard — Scanner de vulnérabilités web</span>
+  <span>Généré le {{ generated_date }}</span>
+</div>
+
+</body>
+</html>

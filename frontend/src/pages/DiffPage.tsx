@@ -1,11 +1,29 @@
 import { useMemo, useState } from "react";
-import { GitCompare, Loader2 } from "lucide-react";
+import { Download, GitCompare, Loader2 } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { useScanList } from "@/hooks/useScan";
 import { useScanDiff } from "@/hooks/useScanDiff";
+import { tokenStorage } from "@/lib/auth";
 import type { Scan, Vulnerability } from "@/types";
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+
+function downloadDiffPdf(oldId: number, newId: number) {
+  const token = tokenStorage.getAccess();
+  fetch(`${BASE_URL}/api/v1/scans/diff/report.pdf?old=${oldId}&new=${newId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+    .then((r) => r.blob())
+    .then((blob) => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `webguard-diff-${oldId}-vs-${newId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+}
 
 function formatUrl(url: string): string {
   return url.replace(/\/$/, "");
@@ -149,6 +167,16 @@ export function DiffPage() {
 
         {diff && (
           <>
+            <div className="flex justify-end">
+              <button
+                onClick={() => downloadDiffPdf(oldId!, newId!)}
+                className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:bg-muted transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                Exporter PDF
+              </button>
+            </div>
+
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded-lg border bg-red-50 dark:bg-red-950/40 p-4 text-center">
                 <p className="text-2xl font-bold text-red-700 dark:text-red-300">
