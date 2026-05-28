@@ -9,12 +9,13 @@ POST   /domains/{id}/verify  → trigger file or DNS check
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
 from app.db.models.user import User
 from app.schemas.domain import DomainCreate, DomainOut
+from app.services.audit import AuditService
 from app.services.domain import (
     DomainAlreadyExistsError,
     DomainForbiddenError,
@@ -28,19 +29,36 @@ router = APIRouter(prefix="/domains", tags=["domains"])
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=DomainOut)
 async def register_domain(
+    request: Request,
     body: DomainCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> DomainOut:
+    audit = AuditService(db)
     service = DomainService(db)
     try:
         record = await service.register(
             user_id=current_user.id, domain=body.domain, method=body.method
         )
     except DomainAlreadyExistsError as exc:
+        await audit.log(
+            current_user.id,
+            "domain.create",
+            target_type="domain",
+            status="failure",
+            request=request,
+        )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Domain already registered"
         ) from exc
+    await audit.log(
+        current_user.id,
+        "domain.create",
+        target_type="domain",
+        target_id=record.id,
+        status="success",
+        request=request,
+    )
     return DomainOut.model_validate(record)
 
 

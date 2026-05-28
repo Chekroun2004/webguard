@@ -23,7 +23,6 @@ ACTIONS: frozenset[str] = frozenset({
     "scheduled.update",
     "scheduled.delete",
     "domain.create",
-    "domain.delete",
     "api_key.create",
     "api_key.revoke",
     "webhook.create",

@@ -10,6 +10,9 @@ POST   /api/v1/domains/{id}/verify  → trigger file or DNS check
 from unittest.mock import AsyncMock, patch
 
 from httpx import AsyncClient
+from sqlalchemy import select
+
+from app.db.models.audit_event import AuditEvent
 
 URL = "/api/v1/domains"
 REG = "/api/v1/auth/register"
@@ -21,7 +24,9 @@ def _user_b_json():
 
 
 class TestDomainRegister:
-    async def test_creates_domain_record(self, client: AsyncClient, auth_headers: dict):
+    async def test_creates_domain_record(
+        self, client: AsyncClient, auth_headers: dict, db_session
+    ):
         resp = await client.post(
             URL,
             json={"domain": "example.com", "method": "file"},
@@ -34,6 +39,13 @@ class TestDomainRegister:
         assert len(data["verification_token"]) == 64
         assert data["is_verified"] is False
         assert data["verified_at"] is None
+
+        events = (
+            await db_session.execute(
+                select(AuditEvent).where(AuditEvent.action == "domain.create")
+            )
+        ).scalars().all()
+        assert len(events) == 1 and events[0].status == "success"
 
     async def test_default_method_is_file(self, client: AsyncClient, auth_headers: dict):
         resp = await client.post(URL, json={"domain": "example.com"}, headers=auth_headers)
