@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
@@ -12,6 +12,7 @@ from app.schemas.scheduled_scan import (
     ScheduledScanOut,
     ScheduledScanUpdate,
 )
+from app.services.audit import AuditService
 from app.services.scheduled_scan import (
     DomainNotVerifiedError,
     InvalidCronError,
@@ -25,10 +26,12 @@ router = APIRouter(prefix="/scheduled", tags=["scheduled"])
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=ScheduledScanOut)
 async def create_scheduled(
+    request: Request,
     body: ScheduledScanCreate = Body(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> ScheduledScanOut:
+    audit = AuditService(db)
     service = ScheduledScanService(db)
     try:
         record = await service.create(
@@ -38,15 +41,37 @@ async def create_scheduled(
             is_active=body.is_active,
         )
     except InvalidCronError as exc:
+        await audit.log(
+            current_user.id,
+            "scheduled.create",
+            target_type="scheduled",
+            status="failure",
+            request=request,
+        )
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Invalid cron expression",
         ) from exc
     except DomainNotVerifiedError as exc:
+        await audit.log(
+            current_user.id,
+            "scheduled.create",
+            target_type="scheduled",
+            status="failure",
+            request=request,
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Domain is not verified",
         ) from exc
+    await audit.log(
+        current_user.id,
+        "scheduled.create",
+        target_type="scheduled",
+        target_id=record.id,
+        status="success",
+        request=request,
+    )
     return ScheduledScanOut.model_validate(record)
 
 
@@ -81,10 +106,12 @@ async def get_scheduled(
 @router.patch("/{scheduled_id}", response_model=ScheduledScanOut)
 async def update_scheduled(
     scheduled_id: int,
+    request: Request,
     body: ScheduledScanUpdate = Body(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> ScheduledScanOut:
+    audit = AuditService(db)
     service = ScheduledScanService(db)
     try:
         record = await service.update(
@@ -94,16 +121,48 @@ async def update_scheduled(
             is_active=body.is_active,
         )
     except ScheduledScanNotFoundError as exc:
+        await audit.log(
+            current_user.id,
+            "scheduled.update",
+            target_type="scheduled",
+            target_id=scheduled_id,
+            status="failure",
+            request=request,
+        )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled scan not found"
         ) from exc
     except ScheduledScanForbiddenError as exc:
+        await audit.log(
+            current_user.id,
+            "scheduled.update",
+            target_type="scheduled",
+            target_id=scheduled_id,
+            status="failure",
+            request=request,
+        )
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied") from exc
     except InvalidCronError as exc:
+        await audit.log(
+            current_user.id,
+            "scheduled.update",
+            target_type="scheduled",
+            target_id=scheduled_id,
+            status="failure",
+            request=request,
+        )
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Invalid cron expression",
         ) from exc
+    await audit.log(
+        current_user.id,
+        "scheduled.update",
+        target_type="scheduled",
+        target_id=record.id,
+        status="success",
+        request=request,
+    )
     return ScheduledScanOut.model_validate(record)
 
 
@@ -114,15 +173,41 @@ async def update_scheduled(
 )
 async def delete_scheduled(
     scheduled_id: int,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> None:
+    audit = AuditService(db)
     service = ScheduledScanService(db)
     try:
         await service.delete(scheduled_id, current_user.id)
     except ScheduledScanNotFoundError as exc:
+        await audit.log(
+            current_user.id,
+            "scheduled.delete",
+            target_type="scheduled",
+            target_id=scheduled_id,
+            status="failure",
+            request=request,
+        )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Scheduled scan not found"
         ) from exc
     except ScheduledScanForbiddenError as exc:
+        await audit.log(
+            current_user.id,
+            "scheduled.delete",
+            target_type="scheduled",
+            target_id=scheduled_id,
+            status="failure",
+            request=request,
+        )
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied") from exc
+    await audit.log(
+        current_user.id,
+        "scheduled.delete",
+        target_type="scheduled",
+        target_id=scheduled_id,
+        status="success",
+        request=request,
+    )

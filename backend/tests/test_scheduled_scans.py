@@ -5,6 +5,9 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, patch
 
 from httpx import AsyncClient
+from sqlalchemy import select
+
+from app.db.models.audit_event import AuditEvent
 
 URL = "/api/v1/scheduled"
 DOMAINS = "/api/v1/domains"
@@ -41,7 +44,7 @@ async def _create_verified_domain(client: AsyncClient, headers: dict, domain: st
 
 class TestScheduledCreate:
     async def test_creates_scheduled_scan_for_verified_domain(
-        self, client: AsyncClient, auth_headers: dict
+        self, client: AsyncClient, auth_headers: dict, db_session
     ):
         await _create_verified_domain(client, auth_headers, "example.com")
         resp = await client.post(
@@ -56,6 +59,11 @@ class TestScheduledCreate:
         assert data["is_active"] is True
         assert data["last_run_at"] is None
         assert data["next_run_at"] is not None
+
+        events = (await db_session.execute(
+            select(AuditEvent).where(AuditEvent.action == "scheduled.create")
+        )).scalars().all()
+        assert len(events) == 1 and events[0].status == "success"
 
     async def test_rejects_invalid_cron(self, client: AsyncClient, auth_headers: dict):
         await _create_verified_domain(client, auth_headers, "example.com")
@@ -230,7 +238,9 @@ class TestScheduledDelete:
         get_resp = await client.get(f"{URL}/{created['id']}", headers=auth_headers)
         assert get_resp.status_code == 404
 
-    async def test_delete_403_for_other_user(self, client: AsyncClient, auth_headers: dict):
+    async def test_delete_403_for_other_user(
+        self, client: AsyncClient, auth_headers: dict, db_session
+    ):
         await _create_verified_domain(client, auth_headers, "example.com")
         created = (
             await client.post(
@@ -242,3 +252,8 @@ class TestScheduledDelete:
         headers_b = await _login_user_b(client)
         resp = await client.delete(f"{URL}/{created['id']}", headers=headers_b)
         assert resp.status_code == 403
+
+        events = (await db_session.execute(
+            select(AuditEvent).where(AuditEvent.action == "scheduled.delete")
+        )).scalars().all()
+        assert len(events) == 1 and events[0].status == "failure"
