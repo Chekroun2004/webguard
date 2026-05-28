@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
@@ -13,17 +13,27 @@ from app.services.api_key import (
     ApiKeyNotFoundError,
     ApiKeyService,
 )
+from app.services.audit import AuditService
 
 router = APIRouter(prefix="/api-keys", tags=["api-keys"])
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=ApiKeyCreated)
 async def create_key(
+    request: Request,
     body: ApiKeyCreate = Body(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> ApiKeyCreated:
     record, plaintext = await ApiKeyService(db).create(user_id=current_user.id, name=body.name)
+    await AuditService(db).log(
+        current_user.id,
+        "api_key.create",
+        target_type="api_key",
+        target_id=record.id,
+        status="success",
+        request=request,
+    )
     base = ApiKeyOut.model_validate(record)
     return ApiKeyCreated(**base.model_dump(), key=plaintext)
 
@@ -44,14 +54,40 @@ async def list_keys(
 )
 async def revoke_key(
     key_id: int,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> None:
+    audit = AuditService(db)
     try:
         await ApiKeyService(db).revoke(key_id, current_user.id)
     except ApiKeyNotFoundError as exc:
+        await audit.log(
+            current_user.id,
+            "api_key.revoke",
+            target_type="api_key",
+            target_id=key_id,
+            status="failure",
+            request=request,
+        )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="API key not found"
         ) from exc
     except ApiKeyForbiddenError as exc:
+        await audit.log(
+            current_user.id,
+            "api_key.revoke",
+            target_type="api_key",
+            target_id=key_id,
+            status="failure",
+            request=request,
+        )
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied") from exc
+    await audit.log(
+        current_user.id,
+        "api_key.revoke",
+        target_type="api_key",
+        target_id=key_id,
+        status="success",
+        request=request,
+    )

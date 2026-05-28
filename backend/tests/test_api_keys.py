@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from httpx import AsyncClient
+from sqlalchemy import select
+
+from app.db.models.audit_event import AuditEvent
 
 API_KEYS = "/api/v1/api-keys"
 ME = "/api/v1/auth/me"
@@ -21,7 +24,9 @@ async def _login_user_b(client: AsyncClient) -> dict:
 
 
 class TestApiKeyCreate:
-    async def test_create_returns_plaintext_once(self, client: AsyncClient, auth_headers: dict):
+    async def test_create_returns_plaintext_once(
+        self, client: AsyncClient, auth_headers: dict, db_session
+    ):
         resp = await client.post(API_KEYS, json={"name": "ci-bot"}, headers=auth_headers)
         assert resp.status_code == 201
         body = resp.json()
@@ -33,6 +38,13 @@ class TestApiKeyCreate:
         listed = (await client.get(API_KEYS, headers=auth_headers)).json()
         assert "key" not in listed[0]
         assert listed[0]["prefix"] == body["prefix"]
+
+        events = (
+            await db_session.execute(
+                select(AuditEvent).where(AuditEvent.action == "api_key.create")
+            )
+        ).scalars().all()
+        assert len(events) == 1 and events[0].status == "success"
 
     async def test_list_isolates_users(self, client: AsyncClient, auth_headers: dict):
         await client.post(API_KEYS, json={"name": "mine"}, headers=auth_headers)
@@ -79,8 +91,17 @@ class TestApiKeyRevoke:
         listed = (await client.get(API_KEYS, headers=auth_headers)).json()
         assert listed[0]["revoked_at"] is not None
 
-    async def test_revoke_other_user_returns_403(self, client: AsyncClient, auth_headers: dict):
+    async def test_revoke_other_user_returns_403(
+        self, client: AsyncClient, auth_headers: dict, db_session
+    ):
         created = (await client.post(API_KEYS, json={"name": "k"}, headers=auth_headers)).json()
         headers_b = await _login_user_b(client)
         resp = await client.delete(f"{API_KEYS}/{created['id']}", headers=headers_b)
         assert resp.status_code == 403
+
+        events = (
+            await db_session.execute(
+                select(AuditEvent).where(AuditEvent.action == "api_key.revoke")
+            )
+        ).scalars().all()
+        assert len(events) == 1 and events[0].status == "failure"
