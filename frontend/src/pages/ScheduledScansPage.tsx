@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { AppShell } from "@/components/AppShell";
 import {
@@ -23,6 +24,7 @@ function AddScheduledScanForm() {
   const [advanced, setAdvanced] = useState(false);
   const [customCron, setCustomCron] = useState("0 9 * * *");
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const create = useCreateScheduledScan();
 
@@ -43,13 +45,13 @@ function AddScheduledScanForm() {
       await create.mutateAsync({ url, cron_expression: computedCron });
       setUrl("");
     } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Erreur inattendue.");
+      setError(err instanceof ApiError ? err.detail : t("common.unexpected_error"));
     }
   };
 
   return (
     <div className="rounded-lg border bg-card p-6 space-y-4">
-      <h2 className="font-semibold">Planifier un scan récurrent</h2>
+      <h2 className="font-semibold">{t("scheduled.add_title")}</h2>
       {error && (
         <p className="text-sm text-destructive rounded-md bg-destructive/10 px-3 py-2">{error}</p>
       )}
@@ -65,7 +67,7 @@ function AddScheduledScanForm() {
         />
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium">Fréquence</label>
+          <label className="block text-sm font-medium">{t("scheduled.frequency")}</label>
           <div className="flex gap-3 text-sm">
             <label className="flex items-center gap-1.5 cursor-pointer">
               <input
@@ -74,7 +76,7 @@ function AddScheduledScanForm() {
                 checked={kind === "daily"}
                 onChange={() => setKind("daily")}
               />
-              Quotidien
+              {t("scheduled.daily")}
             </label>
             <label className="flex items-center gap-1.5 cursor-pointer">
               <input
@@ -83,7 +85,7 @@ function AddScheduledScanForm() {
                 checked={kind === "weekly"}
                 onChange={() => setKind("weekly")}
               />
-              Hebdomadaire
+              {t("scheduled.weekly")}
             </label>
             <label className="flex items-center gap-1.5 cursor-pointer">
               <input
@@ -92,7 +94,7 @@ function AddScheduledScanForm() {
                 checked={kind === "monthly"}
                 onChange={() => setKind("monthly")}
               />
-              Mensuel
+              {t("scheduled.monthly")}
             </label>
           </div>
 
@@ -104,13 +106,13 @@ function AddScheduledScanForm() {
                   onChange={(e) => setWeekDay(Number(e.target.value))}
                   className="rounded-md border bg-background px-2 py-1"
                 >
-                  <option value={1}>Lundi</option>
-                  <option value={2}>Mardi</option>
-                  <option value={3}>Mercredi</option>
-                  <option value={4}>Jeudi</option>
-                  <option value={5}>Vendredi</option>
-                  <option value={6}>Samedi</option>
-                  <option value={0}>Dimanche</option>
+                  <option value={1}>{t("scheduled.mon")}</option>
+                  <option value={2}>{t("scheduled.tue")}</option>
+                  <option value={3}>{t("scheduled.wed")}</option>
+                  <option value={4}>{t("scheduled.thu")}</option>
+                  <option value={5}>{t("scheduled.fri")}</option>
+                  <option value={6}>{t("scheduled.sat")}</option>
+                  <option value={0}>{t("scheduled.sun")}</option>
                 </select>
               )}
               {kind === "monthly" && (
@@ -121,12 +123,12 @@ function AddScheduledScanForm() {
                 >
                   {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
                     <option key={d} value={d}>
-                      Jour {d}
+                      {t("scheduled.day", { n: d })}
                     </option>
                   ))}
                 </select>
               )}
-              <span>à</span>
+              <span>{t("scheduled.at")}</span>
               <select
                 value={hour}
                 onChange={(e) => setHour(Number(e.target.value))}
@@ -147,7 +149,7 @@ function AddScheduledScanForm() {
               checked={advanced}
               onChange={(e) => setAdvanced(e.target.checked)}
             />
-            Mode avancé (cron libre)
+            {t("scheduled.advanced_mode")}
           </label>
 
           {advanced && (
@@ -161,7 +163,7 @@ function AddScheduledScanForm() {
           )}
 
           <p className="text-xs text-muted-foreground">
-            Aperçu : {describeCron(computedCron)}
+            {t("scheduled.cron_preview", { desc: describeCron(computedCron) })}
           </p>
         </div>
 
@@ -171,7 +173,7 @@ function AddScheduledScanForm() {
           className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-1.5"
         >
           {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Planifier
+          {t("scheduled.add_submit")}
         </button>
       </form>
     </div>
@@ -183,6 +185,8 @@ function AddScheduledScanForm() {
 function ScheduleCard({ sched }: { sched: ScheduledScan }) {
   const toggle = useUpdateScheduledScan();
   const del = useDeleteScheduledScan();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language === "fr" ? "fr-FR" : "en-US";
 
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
@@ -192,11 +196,11 @@ function ScheduleCard({ sched }: { sched: ScheduledScan }) {
             <span className="font-medium text-sm truncate">{sched.url}</span>
             {sched.is_active ? (
               <span className="text-xs rounded bg-green-500/15 text-green-600 px-1.5 py-0.5">
-                actif
+                {t("common.active")}
               </span>
             ) : (
               <span className="text-xs rounded bg-muted text-muted-foreground px-1.5 py-0.5">
-                inactif
+                {t("common.inactive")}
               </span>
             )}
           </div>
@@ -204,10 +208,13 @@ function ScheduleCard({ sched }: { sched: ScheduledScan }) {
             {describeCron(sched.cron_expression)}
           </div>
           <div className="text-xs text-muted-foreground">
-            Prochain : {new Date(sched.next_run_at).toLocaleString("fr-FR")}
+            {t("scheduled.next_run", { date: new Date(sched.next_run_at).toLocaleString(locale) })}
             {sched.last_run_at && (
               <>
-                {" • "}Dernier : {new Date(sched.last_run_at).toLocaleString("fr-FR")}
+                {" • "}
+                {t("scheduled.last_run", {
+                  date: new Date(sched.last_run_at).toLocaleString(locale),
+                })}
               </>
             )}
           </div>
@@ -223,13 +230,13 @@ function ScheduleCard({ sched }: { sched: ScheduledScan }) {
             disabled={toggle.isPending}
             className="text-xs rounded-md border px-2 py-1 hover:bg-muted disabled:opacity-50"
           >
-            {sched.is_active ? "Désactiver" : "Activer"}
+            {sched.is_active ? t("common.disable") : t("common.enable")}
           </button>
           <button
             onClick={() => del.mutate(sched.id)}
             disabled={del.isPending}
             className="text-xs rounded-md border px-2 py-1 hover:bg-destructive/10 hover:text-destructive disabled:opacity-50 flex items-center gap-1"
-            aria-label="Supprimer"
+            aria-label={t("common.delete")}
           >
             <Trash2 className="h-3 w-3" />
           </button>
@@ -243,29 +250,26 @@ function ScheduleCard({ sched }: { sched: ScheduledScan }) {
 
 export function ScheduledScansPage() {
   const { data: schedules, isLoading } = useScheduledScansList();
+  const { t } = useTranslation();
 
   return (
     <AppShell>
       <main className="container py-8 space-y-8 max-w-2xl">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Scans planifiés</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Configurez des scans récurrents sur vos domaines vérifiés.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("scheduled.title")}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">{t("scheduled.subtitle")}</p>
         </div>
 
         <AddScheduledScanForm />
 
         <div className="space-y-3">
-          <h2 className="font-semibold">Schedules existants</h2>
+          <h2 className="font-semibold">{t("scheduled.list_title")}</h2>
           {isLoading ? (
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
-              <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
+              <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
             </div>
           ) : !schedules || schedules.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Aucun schedule. Ajoutez-en un ci-dessus.
-            </p>
+            <p className="text-sm text-muted-foreground">{t("scheduled.empty")}</p>
           ) : (
             <div className="space-y-2">
               {schedules.map((s) => (

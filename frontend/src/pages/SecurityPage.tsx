@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { useTranslation } from "react-i18next";
 
 import { AppShell } from "@/components/AppShell";
 import {
@@ -18,6 +19,7 @@ function EnableFlow({ onConfirmed }: { onConfirmed: () => void }) {
   const [enrollment, setEnrollment] = useState<TotpEnrollResponse | null>(null);
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const startEnrollment = async () => {
     setError(null);
@@ -25,7 +27,7 @@ function EnableFlow({ onConfirmed }: { onConfirmed: () => void }) {
       const data = await enroll.mutateAsync();
       setEnrollment(data);
     } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Erreur inattendue.");
+      setError(err instanceof ApiError ? err.detail : t("common.unexpected_error"));
     }
   };
 
@@ -38,17 +40,14 @@ function EnableFlow({ onConfirmed }: { onConfirmed: () => void }) {
       setEnrollment(null);
       onConfirmed();
     } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Code invalide.");
+      setError(err instanceof ApiError ? err.detail : t("security.totp_invalid"));
     }
   };
 
   if (!enrollment) {
     return (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">
-          Activez l'authentification à deux facteurs pour ajouter une étape de vérification
-          (Google Authenticator, 1Password…) à votre connexion.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("security.totp_enable_desc")}</p>
         {error && (
           <p className="text-sm text-destructive rounded-md bg-destructive/10 px-3 py-2">
             {error}
@@ -60,7 +59,7 @@ function EnableFlow({ onConfirmed }: { onConfirmed: () => void }) {
           className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-1.5"
         >
           {enroll.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Activer la 2FA
+          {t("security.totp_enable_btn")}
         </button>
       </div>
     );
@@ -68,24 +67,19 @@ function EnableFlow({ onConfirmed }: { onConfirmed: () => void }) {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Scannez ce QR code avec votre application TOTP, puis saisissez le code à 6 chiffres
-        affiché.
-      </p>
+      <p className="text-sm text-muted-foreground">{t("security.totp_scan_desc")}</p>
       <div className="rounded-md border bg-white p-4 inline-block">
         <QRCodeSVG value={enrollment.otpauth_uri} size={180} level="M" />
       </div>
       <details className="text-xs text-muted-foreground">
-        <summary className="cursor-pointer">Saisir manuellement la clé</summary>
+        <summary className="cursor-pointer">{t("security.totp_manual")}</summary>
         <code className="mt-1 block break-all bg-muted px-2 py-1 rounded">
           {enrollment.secret}
         </code>
       </details>
 
       {error && (
-        <p className="text-sm text-destructive rounded-md bg-destructive/10 px-3 py-2">
-          {error}
-        </p>
+        <p className="text-sm text-destructive rounded-md bg-destructive/10 px-3 py-2">{error}</p>
       )}
       <form onSubmit={handleConfirm} className="flex gap-2 items-center">
         <input
@@ -106,7 +100,7 @@ function EnableFlow({ onConfirmed }: { onConfirmed: () => void }) {
           className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-1.5"
         >
           {confirm.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Confirmer
+          {t("security.totp_confirm_btn")}
         </button>
       </form>
     </div>
@@ -117,6 +111,7 @@ function DisableFlow() {
   const disable = useTotpDisable();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +120,7 @@ function DisableFlow() {
       await disable.mutateAsync(code);
       setCode("");
     } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Code invalide.");
+      setError(err instanceof ApiError ? err.detail : t("security.totp_invalid"));
     }
   };
 
@@ -133,15 +128,11 @@ function DisableFlow() {
     <div className="space-y-3">
       <div className="flex items-center gap-2 text-sm">
         <CheckCircle2 className="h-4 w-4 text-green-600" />
-        <span>2FA activée sur votre compte.</span>
+        <span>{t("security.totp_enabled_status")}</span>
       </div>
-      <p className="text-sm text-muted-foreground">
-        Pour désactiver, confirmez avec un code valide.
-      </p>
+      <p className="text-sm text-muted-foreground">{t("security.totp_disable_desc")}</p>
       {error && (
-        <p className="text-sm text-destructive rounded-md bg-destructive/10 px-3 py-2">
-          {error}
-        </p>
+        <p className="text-sm text-destructive rounded-md bg-destructive/10 px-3 py-2">{error}</p>
       )}
       <form onSubmit={handleSubmit} className="flex gap-2 items-center">
         <input
@@ -162,7 +153,7 @@ function DisableFlow() {
           className="rounded-md border border-destructive text-destructive px-4 py-2 text-sm font-medium hover:bg-destructive/10 disabled:opacity-50 transition-colors flex items-center gap-1.5"
         >
           {disable.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Désactiver
+          {t("security.totp_disable_btn")}
         </button>
       </form>
     </div>
@@ -171,22 +162,21 @@ function DisableFlow() {
 
 export function SecurityPage() {
   const { data: status, isLoading, refetch } = useTotpStatus();
+  const { t } = useTranslation();
 
   return (
     <AppShell>
       <main className="container py-8 space-y-8 max-w-2xl">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Sécurité du compte</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Renforcez la connexion à votre compte WebGuard.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("security.title")}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">{t("security.subtitle")}</p>
         </div>
 
         <div className="rounded-lg border bg-card p-6 space-y-4">
-          <h2 className="font-semibold">Authentification à deux facteurs (TOTP)</h2>
+          <h2 className="font-semibold">{t("security.totp_section")}</h2>
           {isLoading || !status ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
+              <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
             </div>
           ) : status.enabled ? (
             <DisableFlow />

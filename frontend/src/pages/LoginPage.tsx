@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ShieldAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { useLogin, useLoginTotp } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/api";
@@ -18,6 +19,7 @@ export function LoginPage() {
   const login = useLogin();
   const loginTotp = useLoginTotp();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +32,7 @@ export function LoginPage() {
       }
       void navigate("/dashboard");
     } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Erreur inattendue. Réessaie.");
+      setError(err instanceof ApiError ? err.detail : t("common.unexpected_error"));
     }
   };
 
@@ -42,7 +44,7 @@ export function LoginPage() {
       await loginTotp.mutateAsync({ pending_token: pendingToken, code: totpCode });
       void navigate("/dashboard");
     } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Code 2FA invalide.");
+      setError(err instanceof ApiError ? err.detail : t("security.totp_invalid"));
     }
   };
 
@@ -69,27 +71,25 @@ export function LoginPage() {
 
         <div className="relative z-10 space-y-5">
           <h2 className="font-display text-4xl font-bold leading-tight">
-            Détectez les failles avant que les attaquants ne le fassent.
+            {t("login.hero_title")}
           </h2>
           <p className="text-white/60 text-sm leading-relaxed max-w-sm">
-            13 scanners actifs et passifs. Rapports PDF. Scans planifiés. Webhooks Slack/Discord.
-            Authentification à deux facteurs. Tout ce qu'il faut pour sécuriser votre surface
-            d'attaque web.
+            {t("login.hero_body")}
           </p>
           <div className="flex gap-6 pt-2">
             <div>
               <p className="text-2xl font-display font-bold">13</p>
-              <p className="text-white/50 text-xs mt-0.5">Scanners</p>
+              <p className="text-white/50 text-xs mt-0.5">{t("login.stat_scanners_label")}</p>
             </div>
             <div className="w-px bg-white/10" />
             <div>
               <p className="text-2xl font-display font-bold">PDF</p>
-              <p className="text-white/50 text-xs mt-0.5">Rapports</p>
+              <p className="text-white/50 text-xs mt-0.5">{t("login.stat_reports_label")}</p>
             </div>
             <div className="w-px bg-white/10" />
             <div>
               <p className="text-2xl font-display font-bold">2FA</p>
-              <p className="text-white/50 text-xs mt-0.5">Sécurisé</p>
+              <p className="text-white/50 text-xs mt-0.5">{t("login.stat_secured_label")}</p>
             </div>
           </div>
         </div>
@@ -114,11 +114,9 @@ export function LoginPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>{pendingToken ? "Vérification 2FA" : "Connexion"}</CardTitle>
+              <CardTitle>{pendingToken ? t("login.totp_title") : t("login.title")}</CardTitle>
               <CardDescription>
-                {pendingToken
-                  ? "Entrez le code de votre application TOTP."
-                  : "Entrez vos identifiants pour accéder à votre espace."}
+                {pendingToken ? t("login.totp_description") : t("login.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -132,7 +130,7 @@ export function LoginPage() {
                 <form onSubmit={handleCredentialsSubmit} className="space-y-4">
                   <div className="space-y-1.5">
                     <label htmlFor="email" className="text-sm font-medium">
-                      Email
+                      {t("login.email")}
                     </label>
                     <Input
                       id="email"
@@ -145,7 +143,7 @@ export function LoginPage() {
                   </div>
                   <div className="space-y-1.5">
                     <label htmlFor="password" className="text-sm font-medium">
-                      Mot de passe
+                      {t("login.password")}
                     </label>
                     <Input
                       id="password"
@@ -157,7 +155,7 @@ export function LoginPage() {
                     />
                   </div>
                   <Button type="submit" disabled={login.isPending} className="w-full" size="lg">
-                    {login.isPending ? "Connexion…" : "Se connecter"}
+                    {login.isPending ? t("login.submitting") : t("login.submit")}
                   </Button>
                 </form>
               ) : (
@@ -181,7 +179,7 @@ export function LoginPage() {
                     className="w-full"
                     size="lg"
                   >
-                    {loginTotp.isPending ? "Vérification…" : "Valider"}
+                    {loginTotp.isPending ? t("login.totp_validating") : t("login.totp_validate")}
                   </Button>
                   <Button
                     type="button"
@@ -194,19 +192,19 @@ export function LoginPage() {
                       setError(null);
                     }}
                   >
-                    ← Recommencer
+                    {t("login.totp_back")}
                   </Button>
                 </form>
               )}
 
               {!pendingToken && (
                 <p className="text-sm text-muted-foreground text-center">
-                  Pas encore de compte ?{" "}
+                  {t("login.no_account")}{" "}
                   <Link
                     to="/register"
                     className="font-medium text-primary hover:underline underline-offset-4"
                   >
-                    S'inscrire
+                    {t("login.register_link")}
                   </Link>
                 </p>
               )}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Download, FileJson, FileText, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   Cell,
   Legend,
@@ -27,14 +28,6 @@ const SEVERITY_COLORS: Record<Severity, string> = {
   medium: "#d97706",
   low: "#16a34a",
   info: "#2563eb",
-};
-
-const SEVERITY_LABELS: Record<Severity, string> = {
-  critical: "Critique",
-  high: "Élevée",
-  medium: "Moyenne",
-  low: "Faible",
-  info: "Info",
 };
 
 function triggerDownload(blob: Blob, filename: string) {
@@ -69,8 +62,10 @@ function downloadJson(url: string, filename: string) {
 }
 
 function SeverityChart({ findings }: { findings: Vulnerability[] }) {
+  const { t } = useTranslation();
+
   const data = SEVERITY_ORDER.map((sev) => ({
-    name: SEVERITY_LABELS[sev],
+    name: t(`severity.${sev}`),
     value: findings.filter((f) => f.severity === sev).length,
     color: SEVERITY_COLORS[sev],
   })).filter((d) => d.value > 0);
@@ -79,7 +74,7 @@ function SeverityChart({ findings }: { findings: Vulnerability[] }) {
 
   return (
     <div className="rounded-lg border bg-card p-4">
-      <h3 className="font-semibold text-sm mb-3">Répartition par sévérité</h3>
+      <h3 className="font-semibold text-sm mb-3">{t("scan_detail.severity_chart")}</h3>
       <ResponsiveContainer width="100%" height={200}>
         <PieChart>
           <Pie
@@ -98,7 +93,7 @@ function SeverityChart({ findings }: { findings: Vulnerability[] }) {
           <Tooltip
             formatter={(value) => [
               typeof value === "number" ? value : 0,
-              "vulnérabilité(s)",
+              t("scan_detail.vuln_plural"),
             ]}
           />
           <Legend
@@ -114,6 +109,8 @@ function SeverityChart({ findings }: { findings: Vulnerability[] }) {
 
 function FindingCard({ finding }: { finding: Vulnerability }) {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
+
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
       <button
@@ -130,7 +127,7 @@ function FindingCard({ finding }: { finding: Vulnerability }) {
           {finding.recommendation && (
             <p>
               <span className="font-medium text-xs uppercase tracking-wide text-muted-foreground">
-                Recommandation :
+                {t("scan_detail.recommendation")}
               </span>{" "}
               {finding.recommendation}
             </p>
@@ -150,6 +147,8 @@ export function ScanDetailPage() {
   const { id } = useParams<{ id: string }>();
   const scanId = id ? parseInt(id, 10) : null;
   const { data: scan, isLoading } = useScan(scanId);
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language === "fr" ? "fr-FR" : "en-US";
 
   const [activeFilter, setActiveFilter] = useState<Severity | "all">("all");
 
@@ -167,9 +166,9 @@ export function ScanDetailPage() {
     return (
       <AppShell>
         <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <p className="text-muted-foreground">Scan introuvable.</p>
+          <p className="text-muted-foreground">{t("scan_detail.not_found")}</p>
           <Link to="/dashboard" className="text-sm text-primary hover:underline">
-            Retour au tableau de bord
+            {t("scan_detail.back_dashboard")}
           </Link>
         </div>
       </AppShell>
@@ -193,9 +192,11 @@ export function ScanDetailPage() {
         <div className="space-y-1">
           <h1 className="text-xl font-bold break-all">{scan.url}</h1>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <span>{new Date(scan.created_at).toLocaleString("fr-FR")}</span>
+            <span>{new Date(scan.created_at).toLocaleString(locale)}</span>
             <span className="capitalize font-medium">{scan.status}</span>
-            <span>{scan.findings.length} vulnérabilité(s)</span>
+            <span>
+              {scan.findings.length} {t("scan_detail.vuln_plural")}
+            </span>
           </div>
         </div>
 
@@ -208,7 +209,7 @@ export function ScanDetailPage() {
             className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:bg-muted transition-colors"
           >
             <FileJson className="h-4 w-4" />
-            Exporter JSON
+            {t("scan_detail.export_json")}
           </button>
           <button
             onClick={() =>
@@ -221,7 +222,7 @@ export function ScanDetailPage() {
           >
             <Download className="h-4 w-4" />
             <FileText className="h-4 w-4 -ml-0.5" />
-            Exporter PDF
+            {t("scan_detail.export_pdf")}
           </button>
         </div>
 
@@ -239,7 +240,7 @@ export function ScanDetailPage() {
                   : "bg-background text-muted-foreground border-border hover:border-foreground"
               }`}
             >
-              Tout ({scan.findings.length})
+              {t("scan_detail.filter_all", { count: scan.findings.length })}
             </button>
             {SEVERITY_ORDER.map(
               (sev) =>
@@ -253,7 +254,7 @@ export function ScanDetailPage() {
                         : "bg-background text-muted-foreground border-border hover:border-foreground"
                     }`}
                   >
-                    {SEVERITY_LABELS[sev]} ({countBySev[sev]})
+                    {t(`severity.${sev}`)} ({countBySev[sev]})
                   </button>
                 ),
             )}
@@ -263,12 +264,12 @@ export function ScanDetailPage() {
         {/* Findings list */}
         <div className="space-y-2">
           <h2 className="font-semibold text-sm">
-            {filteredFindings.length} résultat(s)
-            {activeFilter !== "all" && ` — ${SEVERITY_LABELS[activeFilter]}`}
+            {t("scan_detail.result_count", { count: filteredFindings.length })}
+            {activeFilter !== "all" && ` — ${t(`severity.${activeFilter}`)}`}
           </h2>
           {filteredFindings.length === 0 ? (
             <p className="text-sm text-green-600 font-medium py-4 text-center">
-              ✓ Aucune vulnérabilité détectée
+              {t("scan_detail.no_findings")}
             </p>
           ) : (
             filteredFindings.map((f) => <FindingCard key={f.id} finding={f} />)

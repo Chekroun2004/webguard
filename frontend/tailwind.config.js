@@ -48,9 +48,17 @@ export default {
       backgroundImage: {
         "gradient-brand": "linear-gradient(135deg, #6366f1, #8b5cf6)",
         "gradient-brand-r": "linear-gradient(to right, #6366f1, #8b5cf6)",
+        "gradient-brand-45": "linear-gradient(45deg, #6366f1, #8b5cf6)",
+      },
+      boxShadow: {
+        "glow-sm": "0 0 14px rgba(99,102,241,0.3)",
+        "glow": "0 0 24px rgba(99,102,241,0.35), 0 0 48px rgba(99,102,241,0.15)",
+        "glow-lg": "0 0 40px rgba(99,102,241,0.4), 0 0 80px rgba(139,92,246,0.2)",
+        "card-dark": "0 1px 1px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)",
       },
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["Syne", "Inter", "ui-sans-serif", "sans-serif"],
       },
     },
   },

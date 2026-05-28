@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CheckCircle2, Loader2, Trash2, XCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { AppShell } from "@/components/AppShell";
 import {
@@ -19,6 +20,7 @@ function AddWebhookForm() {
   const [url, setUrl] = useState("");
   const [provider, setProvider] = useState<WebhookProvider>("slack");
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const create = useCreateWebhook();
 
@@ -29,19 +31,19 @@ function AddWebhookForm() {
       await create.mutateAsync({ url, provider });
       setUrl("");
     } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Erreur inattendue.");
+      setError(err instanceof ApiError ? err.detail : t("common.unexpected_error"));
     }
   };
 
   return (
     <div className="rounded-lg border bg-card p-6 space-y-4">
-      <h2 className="font-semibold">Ajouter un webhook</h2>
+      <h2 className="font-semibold">{t("webhooks.add_title")}</h2>
       {error && (
         <p className="text-sm text-destructive rounded-md bg-destructive/10 px-3 py-2">{error}</p>
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <label className="block text-sm font-medium">Provider</label>
+          <label className="block text-sm font-medium">{t("webhooks.provider_label")}</label>
           <div className="flex gap-3 text-sm">
             <label className="flex items-center gap-1.5 cursor-pointer">
               <input
@@ -65,7 +67,7 @@ function AddWebhookForm() {
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium">URL du webhook</label>
+          <label className="block text-sm font-medium">{t("webhooks.url_label")}</label>
           <input
             type="url"
             required
@@ -87,7 +89,7 @@ function AddWebhookForm() {
           className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-1.5"
         >
           {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Ajouter
+          {t("webhooks.add_submit")}
         </button>
       </form>
     </div>
@@ -101,6 +103,7 @@ function WebhookCard({ webhook }: { webhook: Webhook }) {
   const del = useDeleteWebhook();
   const test = useTestWebhook();
   const [lastTest, setLastTest] = useState<null | { delivered: boolean }>(null);
+  const { t } = useTranslation();
 
   const onTest = async () => {
     setLastTest(null);
@@ -123,11 +126,11 @@ function WebhookCard({ webhook }: { webhook: Webhook }) {
             <span className="font-mono text-xs truncate max-w-xs">{webhook.url}</span>
             {webhook.is_active ? (
               <span className="text-xs rounded bg-green-500/15 text-green-600 px-1.5 py-0.5">
-                actif
+                {t("common.active")}
               </span>
             ) : (
               <span className="text-xs rounded bg-muted text-muted-foreground px-1.5 py-0.5">
-                inactif
+                {t("common.inactive")}
               </span>
             )}
           </div>
@@ -136,12 +139,12 @@ function WebhookCard({ webhook }: { webhook: Webhook }) {
               {lastTest.delivered ? (
                 <>
                   <CheckCircle2 className="h-3 w-3 text-green-600" />
-                  <span className="text-green-600">Test envoyé.</span>
+                  <span className="text-green-600">{t("webhooks.test_sent")}</span>
                 </>
               ) : (
                 <>
                   <XCircle className="h-3 w-3 text-destructive" />
-                  <span className="text-destructive">L'envoi a échoué.</span>
+                  <span className="text-destructive">{t("webhooks.test_failed")}</span>
                 </>
               )}
             </div>
@@ -154,7 +157,7 @@ function WebhookCard({ webhook }: { webhook: Webhook }) {
             className="text-xs rounded-md border px-2 py-1 hover:bg-muted disabled:opacity-50 flex items-center gap-1"
           >
             {test.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
-            Tester
+            {t("common.test")}
           </button>
           <button
             onClick={() =>
@@ -166,13 +169,13 @@ function WebhookCard({ webhook }: { webhook: Webhook }) {
             disabled={toggle.isPending}
             className="text-xs rounded-md border px-2 py-1 hover:bg-muted disabled:opacity-50"
           >
-            {webhook.is_active ? "Désactiver" : "Activer"}
+            {webhook.is_active ? t("common.disable") : t("common.enable")}
           </button>
           <button
             onClick={() => del.mutate(webhook.id)}
             disabled={del.isPending}
             className="text-xs rounded-md border px-2 py-1 hover:bg-destructive/10 hover:text-destructive disabled:opacity-50 flex items-center gap-1"
-            aria-label="Supprimer"
+            aria-label={t("common.delete")}
           >
             <Trash2 className="h-3 w-3" />
           </button>
@@ -186,29 +189,26 @@ function WebhookCard({ webhook }: { webhook: Webhook }) {
 
 export function WebhooksPage() {
   const { data: webhooks, isLoading } = useWebhooksList();
+  const { t } = useTranslation();
 
   return (
     <AppShell>
       <main className="container py-8 space-y-8 max-w-2xl">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Webhooks</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Recevez une notification Slack ou Discord à chaque scan terminé.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("webhooks.title")}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">{t("webhooks.subtitle")}</p>
         </div>
 
         <AddWebhookForm />
 
         <div className="space-y-3">
-          <h2 className="font-semibold">Webhooks existants</h2>
+          <h2 className="font-semibold">{t("webhooks.list_title")}</h2>
           {isLoading ? (
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
-              <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
+              <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
             </div>
           ) : !webhooks || webhooks.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Aucun webhook. Ajoutez-en un ci-dessus.
-            </p>
+            <p className="text-sm text-muted-foreground">{t("webhooks.empty")}</p>
           ) : (
             <div className="space-y-2">
               {webhooks.map((w) => (

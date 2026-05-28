@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
+import "../i18n";
 
 // jsdom does not implement matchMedia; the dark-mode hook relies on it.
 if (typeof window !== "undefined" && !window.matchMedia) {

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { AppShell } from "@/components/AppShell";
 import { useDomainList, useRegisterDomain, useVerifyDomain, type VerificationMethod } from "@/hooks/useDomains";
@@ -12,6 +13,7 @@ function AddDomainForm() {
   const [domain, setDomain] = useState("");
   const [method, setMethod] = useState<VerificationMethod>("file");
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const register = useRegisterDomain();
 
@@ -22,13 +24,13 @@ function AddDomainForm() {
       await register.mutateAsync({ domain, method });
       setDomain("");
     } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Erreur inattendue.");
+      setError(err instanceof ApiError ? err.detail : t("common.unexpected_error"));
     }
   };
 
   return (
     <div className="rounded-lg border bg-card p-6 space-y-4">
-      <h2 className="font-semibold">Ajouter un domaine</h2>
+      <h2 className="font-semibold">{t("domains.add_title")}</h2>
       {error && (
         <p className="text-sm text-destructive rounded-md bg-destructive/10 px-3 py-2">{error}</p>
       )}
@@ -50,7 +52,7 @@ function AddDomainForm() {
               checked={method === "file"}
               onChange={() => setMethod("file")}
             />
-            Fichier de vérification
+            {t("domains.method_file")}
           </label>
           <label className="flex items-center gap-1.5 cursor-pointer">
             <input
@@ -59,7 +61,7 @@ function AddDomainForm() {
               checked={method === "dns"}
               onChange={() => setMethod("dns")}
             />
-            Enregistrement DNS TXT
+            {t("domains.method_dns")}
           </label>
         </div>
         <button
@@ -68,7 +70,7 @@ function AddDomainForm() {
           className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-1.5"
         >
           {register.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Ajouter
+          {t("domains.add_submit")}
         </button>
       </form>
     </div>
@@ -79,6 +81,7 @@ function AddDomainForm() {
 
 function DomainCard({ domain }: { domain: Domain }) {
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
   const verify = useVerifyDomain();
 
   const handleVerify = async () => {
@@ -86,14 +89,20 @@ function DomainCard({ domain }: { domain: Domain }) {
     try {
       await verify.mutateAsync(domain.id);
     } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Vérification échouée.");
+      setError(err instanceof ApiError ? err.detail : t("domains.verify_failed"));
     }
   };
 
   const isFile = domain.verification_method === "file";
   const instruction = isFile
-    ? `Créez le fichier https://${domain.domain}/webguard-verify-${domain.verification_token}.txt contenant uniquement le token ci-dessous.`
-    : `Ajoutez un enregistrement DNS TXT sur _webguard.${domain.domain} avec la valeur : webguard-verify=${domain.verification_token}`;
+    ? t("domains.instruction_file", {
+        domain: domain.domain,
+        token: domain.verification_token,
+      })
+    : t("domains.instruction_dns", {
+        domain: domain.domain,
+        token: domain.verification_token,
+      });
 
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
@@ -106,11 +115,11 @@ function DomainCard({ domain }: { domain: Domain }) {
           )}
           <span className="font-medium text-sm truncate">{domain.domain}</span>
           <span className="text-xs text-muted-foreground shrink-0">
-            ({domain.verification_method === "file" ? "Fichier" : "DNS"})
+            ({domain.verification_method === "file" ? t("domains.file_method") : t("domains.dns_method")})
           </span>
         </div>
         {domain.is_verified ? (
-          <span className="text-xs text-green-600 font-medium shrink-0">Vérifié ✓</span>
+          <span className="text-xs text-green-600 font-medium shrink-0">{t("domains.verified")}</span>
         ) : (
           <button
             onClick={handleVerify}
@@ -118,7 +127,7 @@ function DomainCard({ domain }: { domain: Domain }) {
             className="shrink-0 rounded-md bg-primary text-primary-foreground px-3 py-1 text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-1"
           >
             {verify.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
-            Vérifier
+            {t("domains.verify_btn")}
           </button>
         )}
       </div>
@@ -129,9 +138,7 @@ function DomainCard({ domain }: { domain: Domain }) {
           <div className="rounded bg-muted px-2 py-1 font-mono text-xs break-all">
             {domain.verification_token}
           </div>
-          {error && (
-            <p className="text-xs text-destructive">{error}</p>
-          )}
+          {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
       )}
     </div>
@@ -142,29 +149,26 @@ function DomainCard({ domain }: { domain: Domain }) {
 
 export function DomainsPage() {
   const { data: domains, isLoading } = useDomainList();
+  const { t } = useTranslation();
 
   return (
     <AppShell>
       <main className="container py-8 space-y-8 max-w-2xl">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Mes domaines</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Prouvez que vous contrôlez un domaine avant de le scanner.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("domains.title")}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">{t("domains.subtitle")}</p>
         </div>
 
         <AddDomainForm />
 
         <div className="space-y-3">
-          <h2 className="font-semibold">Domaines enregistrés</h2>
+          <h2 className="font-semibold">{t("domains.list_title")}</h2>
           {isLoading ? (
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
-              <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
+              <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
             </div>
           ) : !domains || domains.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Aucun domaine enregistré. Ajoutez-en un ci-dessus.
-            </p>
+            <p className="text-sm text-muted-foreground">{t("domains.empty")}</p>
           ) : (
             <div className="space-y-2">
               {domains.map((d) => (

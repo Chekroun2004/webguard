@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ExternalLink, Loader2, ScanLine } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { useCreateScan, useScanList, type ScanAuthConfig } from "@/hooks/useScan";
 import { useScanEvents } from "@/hooks/useScanEvents";
@@ -36,6 +37,7 @@ function ScanForm() {
 
   const createScan = useCreateScan();
   const liveStatus = useScanEvents(activeScanId);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (liveStatus === "completed" || liveStatus === "failed") {
@@ -69,7 +71,7 @@ function ScanForm() {
       setUrl("");
       setActiveScanId(scan.id);
     } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Erreur inattendue.");
+      setError(err instanceof ApiError ? err.detail : t("common.unexpected_error"));
     }
   };
 
@@ -81,7 +83,7 @@ function ScanForm() {
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2">
           <ScanLine className="h-4 w-4 text-primary" />
-          Lancer un scan
+          {t("dashboard.scan_form_title")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -105,10 +107,10 @@ function ScanForm() {
               {createScan.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Envoi…
+                  {t("dashboard.scan_submitting")}
                 </>
               ) : (
-                "Scanner"
+                t("dashboard.scan_submit")
               )}
             </Button>
           </div>
@@ -119,7 +121,7 @@ function ScanForm() {
             className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
             aria-expanded={authOpen}
           >
-            {authOpen ? "▾" : "▸"} Authentification (optionnel)
+            {authOpen ? "▾" : "▸"} {t("dashboard.auth_toggle")}
           </button>
 
           {authOpen && (
@@ -133,7 +135,11 @@ function ScanForm() {
                       checked={authMode === mode}
                       onChange={() => setAuthMode(mode)}
                     />
-                    {mode === "none" ? "Aucune" : mode === "cookie" ? "Cookie" : "Login form"}
+                    {mode === "none"
+                      ? t("dashboard.auth_none")
+                      : mode === "cookie"
+                        ? t("dashboard.auth_cookie_label")
+                        : t("dashboard.auth_form_label")}
                   </label>
                 ))}
               </div>
@@ -143,14 +149,14 @@ function ScanForm() {
                   <Input
                     type="text"
                     required
-                    placeholder="Nom (ex: session)"
+                    placeholder={t("dashboard.auth_cookie_name")}
                     value={cookieName}
                     onChange={(e) => setCookieName(e.target.value)}
                   />
                   <Input
                     type="text"
                     required
-                    placeholder="Valeur"
+                    placeholder={t("dashboard.auth_cookie_value")}
                     value={cookieValue}
                     onChange={(e) => setCookieValue(e.target.value)}
                     className="font-mono"
@@ -163,7 +169,7 @@ function ScanForm() {
                   <Input
                     type="url"
                     required
-                    placeholder="URL du login (ex: https://example.com/login)"
+                    placeholder={t("dashboard.auth_login_url")}
                     value={loginUrl}
                     onChange={(e) => setLoginUrl(e.target.value)}
                   />
@@ -171,7 +177,7 @@ function ScanForm() {
                     <Input
                       type="text"
                       required
-                      placeholder="Champ username"
+                      placeholder={t("dashboard.auth_username_field")}
                       value={usernameField}
                       onChange={(e) => setUsernameField(e.target.value)}
                       className="font-mono"
@@ -179,7 +185,7 @@ function ScanForm() {
                     <Input
                       type="text"
                       required
-                      placeholder="Champ password"
+                      placeholder={t("dashboard.auth_password_field")}
                       value={passwordField}
                       onChange={(e) => setPasswordField(e.target.value)}
                       className="font-mono"
@@ -187,20 +193,20 @@ function ScanForm() {
                     <Input
                       type="text"
                       required
-                      placeholder="Identifiant"
+                      placeholder={t("dashboard.auth_username")}
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                     />
                     <Input
                       type="password"
                       required
-                      placeholder="Mot de passe"
+                      placeholder={t("dashboard.auth_password")}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Identifiants chiffrés (Fernet) avant stockage.
+                    {t("dashboard.auth_encrypted_hint")}
                   </p>
                 </div>
               )}
@@ -212,7 +218,7 @@ function ScanForm() {
           <ScanProgressBar status={liveStatus} />
         )}
         {liveStatus === "failed" && (
-          <p className="text-sm text-destructive">Le scan a échoué. Réessaie.</p>
+          <p className="text-sm text-destructive">{t("dashboard.scan_failed")}</p>
         )}
       </CardContent>
     </Card>
@@ -223,6 +229,9 @@ function ScanForm() {
 
 function ScanCard({ scan }: { scan: Scan }) {
   const [open, setOpen] = useState(false);
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language === "fr" ? "fr-FR" : "en-US";
+
   const countBySeverity = scan.findings.reduce<Record<string, number>>((acc, f) => {
     acc[f.severity] = (acc[f.severity] ?? 0) + 1;
     return acc;
@@ -240,18 +249,18 @@ function ScanCard({ scan }: { scan: Scan }) {
         <div className="flex flex-col gap-0.5 min-w-0">
           <span className="text-sm font-medium truncate">{scan.url}</span>
           <span className="text-xs text-muted-foreground">
-            {new Date(scan.created_at).toLocaleString("fr-FR")}
+            {new Date(scan.created_at).toLocaleString(locale)}
           </span>
         </div>
         <div className="flex items-center gap-2 ml-4 shrink-0">
           {isPending ? (
             <span className="text-xs text-muted-foreground flex items-center gap-1.5">
               <Loader2 className="h-3 w-3 animate-spin" />
-              {scan.status === "running" ? "Scan en cours…" : "En attente…"}
+              {scan.status === "running" ? t("dashboard.scan_running") : t("dashboard.scan_pending")}
             </span>
           ) : scan.findings.length === 0 ? (
             <span className="text-xs text-emerald-600 font-medium dark:text-emerald-400">
-              ✓ Aucune vuln.
+              {t("dashboard.no_vulns")}
             </span>
           ) : (
             <>
@@ -259,7 +268,8 @@ function ScanCard({ scan }: { scan: Scan }) {
                 countBySeverity[sev] ? <SeverityBadge key={sev} severity={sev} /> : null
               )}
               <span className="text-xs text-muted-foreground">
-                {scan.findings.length} trouvé{scan.findings.length > 1 ? "es" : "e"}
+                {scan.findings.length}{" "}
+                {scan.findings.length > 1 ? t("dashboard.found_many") : t("dashboard.found_one")}
               </span>
             </>
           )}
@@ -271,7 +281,7 @@ function ScanCard({ scan }: { scan: Scan }) {
                 className="text-xs text-primary hover:underline flex items-center gap-0.5"
               >
                 <ExternalLink className="h-3 w-3" />
-                Rapport
+                {t("dashboard.report_link")}
               </Link>
               <span className="text-muted-foreground text-xs">{open ? "▲" : "▼"}</span>
             </>
@@ -290,7 +300,8 @@ function ScanCard({ scan }: { scan: Scan }) {
               <p className="text-xs text-muted-foreground">{f.description}</p>
               {f.recommendation && (
                 <p className="text-xs text-muted-foreground">
-                  <span className="font-medium">Recommandation :</span> {f.recommendation}
+                  <span className="font-medium">{t("dashboard.recommendation")}</span>{" "}
+                  {f.recommendation}
                 </p>
               )}
               {f.evidence && (
@@ -305,7 +316,7 @@ function ScanCard({ scan }: { scan: Scan }) {
 
       {open && scan.findings.length === 0 && (
         <p className="px-5 py-3 text-sm text-muted-foreground border-t">
-          Aucune vulnérabilité détectée.
+          {t("dashboard.no_vulnerabilities")}
         </p>
       )}
     </Card>
@@ -316,12 +327,13 @@ function ScanCard({ scan }: { scan: Scan }) {
 
 function ScanHistory() {
   const { data: scans, isLoading } = useScanList();
+  const { t } = useTranslation();
 
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 text-muted-foreground text-sm py-8 justify-center">
         <Spinner size="sm" />
-        Chargement…
+        {t("common.loading")}
       </div>
     );
   }
@@ -329,8 +341,8 @@ function ScanHistory() {
   if (!scans || scans.length === 0) {
     return (
       <EmptyState
-        title="Aucun scan effectué"
-        description="Lancez votre premier scan ci-dessus pour commencer à détecter les vulnérabilités."
+        title={t("dashboard.no_scans_title")}
+        description={t("dashboard.no_scans_desc")}
       />
     );
   }
@@ -347,21 +359,21 @@ function ScanHistory() {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export function DashboardPage() {
+  const { t } = useTranslation();
+
   return (
     <AppShell>
       <main className="container py-8 space-y-8 max-w-4xl">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Lancez un scan pour détecter les en-têtes de sécurité manquants.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("dashboard.title")}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">{t("dashboard.subtitle")}</p>
         </div>
 
         <ScanForm />
 
         <div className="space-y-3">
           <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-            Historique des scans
+            {t("dashboard.scan_history")}
           </h2>
           <ScanHistory />
         </div>

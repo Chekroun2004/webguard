@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ShieldAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { useLogin, useRegister } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/api";
@@ -25,11 +26,12 @@ export function RegisterPage() {
       await login.mutateAsync({ email, password });
       void navigate("/dashboard");
     } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Erreur inattendue. Réessaie.");
+      setError(err instanceof ApiError ? err.detail : t("common.unexpected_error"));
     }
   };
 
   const isPending = register.isPending || login.isPending;
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -54,26 +56,25 @@ export function RegisterPage() {
 
         <div className="relative z-10 space-y-5">
           <h2 className="font-display text-4xl font-bold leading-tight">
-            Un compte gratuit. Une visibilité totale sur votre sécurité web.
+            {t("register.hero_title")}
           </h2>
           <p className="text-white/60 text-sm leading-relaxed max-w-sm">
-            Scans à la demande, rapports PDF exportables, comparaison de scans, alertes webhook
-            Slack/Discord et bien plus. Prêt en 30 secondes.
+            {t("register.hero_body")}
           </p>
           <div className="flex gap-6 pt-2">
             <div>
-              <p className="text-2xl font-display font-bold">Free</p>
-              <p className="text-white/50 text-xs mt-0.5">Toujours</p>
+              <p className="text-2xl font-display font-bold">{t("register.stat_free")}</p>
+              <p className="text-white/50 text-xs mt-0.5">{t("register.stat_free_label")}</p>
             </div>
             <div className="w-px bg-white/10" />
             <div>
-              <p className="text-2xl font-display font-bold">30s</p>
-              <p className="text-white/50 text-xs mt-0.5">Pour démarrer</p>
+              <p className="text-2xl font-display font-bold">{t("register.stat_time")}</p>
+              <p className="text-white/50 text-xs mt-0.5">{t("register.stat_time_label")}</p>
             </div>
             <div className="w-px bg-white/10" />
             <div>
-              <p className="text-2xl font-display font-bold">∞</p>
-              <p className="text-white/50 text-xs mt-0.5">Scans</p>
+              <p className="text-2xl font-display font-bold">{t("register.stat_scans")}</p>
+              <p className="text-white/50 text-xs mt-0.5">{t("register.stat_scans_label")}</p>
             </div>
           </div>
         </div>
@@ -98,8 +99,8 @@ export function RegisterPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Créer un compte</CardTitle>
-              <CardDescription>Rejoignez WebGuard et commencez à scanner gratuitement.</CardDescription>
+              <CardTitle>{t("register.title")}</CardTitle>
+              <CardDescription>{t("register.description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {error && (
@@ -111,8 +112,8 @@ export function RegisterPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
                   <label htmlFor="fullName" className="text-sm font-medium">
-                    Nom complet{" "}
-                    <span className="text-muted-foreground font-normal">(optionnel)</span>
+                    {t("register.full_name")}{" "}
+                    <span className="text-muted-foreground font-normal">{t("register.full_name_optional")}</span>
                   </label>
                   <Input
                     id="fullName"
@@ -125,7 +126,7 @@ export function RegisterPage() {
 
                 <div className="space-y-1.5">
                   <label htmlFor="email" className="text-sm font-medium">
-                    Email
+                    {t("register.email")}
                   </label>
                   <Input
                     id="email"
@@ -139,9 +140,9 @@ export function RegisterPage() {
 
                 <div className="space-y-1.5">
                   <label htmlFor="password" className="text-sm font-medium">
-                    Mot de passe{" "}
+                    {t("register.password")}{" "}
                     <span className="text-muted-foreground font-normal text-xs">
-                      (8 caractères minimum)
+                      {t("register.password_hint")}
                     </span>
                   </label>
                   <Input
@@ -156,17 +157,17 @@ export function RegisterPage() {
                 </div>
 
                 <Button type="submit" disabled={isPending} className="w-full" size="lg">
-                  {isPending ? "Création du compte…" : "Créer mon compte"}
+                  {isPending ? t("register.submitting") : t("register.submit")}
                 </Button>
               </form>
 
               <p className="text-sm text-muted-foreground text-center">
-                Déjà un compte ?{" "}
+                {t("register.have_account")}{" "}
                 <Link
                   to="/login"
                   className="font-medium text-primary hover:underline underline-offset-4"
                 >
-                  Se connecter
+                  {t("register.login_link")}
                 </Link>
               </p>
             </CardContent>

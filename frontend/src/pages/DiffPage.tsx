@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Download, GitCompare, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { AppShell } from "@/components/AppShell";
 import { SeverityBadge } from "@/components/SeverityBadge";
@@ -59,14 +60,14 @@ export function DiffPage() {
   const { data: scans, isLoading: scansLoading } = useScanList();
   const [oldId, setOldId] = useState<number | null>(null);
   const [newId, setNewId] = useState<number | null>(null);
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language === "fr" ? "fr-FR" : "en-US";
 
-  // Only completed scans can be diffed
   const completedScans = useMemo(
     () => (scans ?? []).filter((s) => s.status === "completed"),
     [scans],
   );
 
-  // Group scans by normalized URL for the dropdowns
   const scansByUrl = useMemo(() => {
     const map = new Map<string, Scan[]>();
     for (const s of completedScans) {
@@ -78,7 +79,6 @@ export function DiffPage() {
     return map;
   }, [completedScans]);
 
-  // For the "new" dropdown, only show scans whose URL has at least 2 entries OR matches the selected "old"
   const oldScan = completedScans.find((s) => s.id === oldId) ?? null;
   const compatibleScans = oldScan
     ? completedScans.filter((s) => formatUrl(s.url) === formatUrl(oldScan.url) && s.id !== oldId)
@@ -92,17 +92,15 @@ export function DiffPage() {
         <div className="space-y-1">
           <h1 className="text-xl font-bold flex items-center gap-2">
             <GitCompare className="h-5 w-5 text-[#6366f1]" />
-            Comparer deux scans
+            {t("diff.title")}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Sélectionnez deux scans complétés du même domaine pour voir ce qui a changé.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("diff.subtitle")}</p>
         </div>
 
         {/* Selectors */}
         <div className="grid sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Scan de référence</label>
+            <label className="text-xs font-medium text-muted-foreground">{t("diff.reference")}</label>
             <select
               value={oldId ?? ""}
               onChange={(e) => {
@@ -113,12 +111,12 @@ export function DiffPage() {
               disabled={scansLoading || completedScans.length === 0}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:opacity-50"
             >
-              <option value="">— Choisir un scan —</option>
+              <option value="">{t("diff.choose")}</option>
               {Array.from(scansByUrl.entries()).map(([url, list]) => (
                 <optgroup key={url} label={url}>
                   {list.map((s) => (
                     <option key={s.id} value={s.id}>
-                      #{s.id} — {new Date(s.created_at).toLocaleString("fr-FR")}
+                      #{s.id} — {new Date(s.created_at).toLocaleString(locale)}
                     </option>
                   ))}
                 </optgroup>
@@ -127,17 +125,17 @@ export function DiffPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Scan à comparer</label>
+            <label className="text-xs font-medium text-muted-foreground">{t("diff.compare")}</label>
             <select
               value={newId ?? ""}
               onChange={(e) => setNewId(e.target.value ? parseInt(e.target.value, 10) : null)}
               disabled={oldId === null || compatibleScans.length === 0}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm disabled:opacity-50"
             >
-              <option value="">— Choisir un scan —</option>
+              <option value="">{t("diff.choose")}</option>
               {compatibleScans.map((s) => (
                 <option key={s.id} value={s.id}>
-                  #{s.id} — {new Date(s.created_at).toLocaleString("fr-FR")}
+                  #{s.id} — {new Date(s.created_at).toLocaleString(locale)}
                 </option>
               ))}
             </select>
@@ -147,8 +145,7 @@ export function DiffPage() {
         {/* Empty state */}
         {!scansLoading && completedScans.length < 2 && (
           <p className="text-sm text-muted-foreground py-8 text-center border rounded-md">
-            Vous devez avoir au moins deux scans complétés sur un même domaine pour utiliser cette
-            fonctionnalité.
+            {t("diff.need_two")}
           </p>
         )}
 
@@ -160,9 +157,7 @@ export function DiffPage() {
         )}
 
         {error && (
-          <p className="text-sm text-red-600 py-4">
-            Erreur : impossible de comparer ces deux scans.
-          </p>
+          <p className="text-sm text-red-600 py-4">{t("diff.error")}</p>
         )}
 
         {diff && (
@@ -173,7 +168,7 @@ export function DiffPage() {
                 className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:bg-muted transition-colors"
               >
                 <Download className="h-4 w-4" />
-                Exporter PDF
+                {t("diff.export_pdf")}
               </button>
             </div>
 
@@ -183,7 +178,7 @@ export function DiffPage() {
                   {diff.added.length}
                 </p>
                 <p className="text-xs text-red-600 dark:text-red-400 uppercase tracking-wide mt-1">
-                  Nouvelles vulnérabilités
+                  {t("diff.label_added")}
                 </p>
               </div>
               <div className="rounded-lg border bg-green-50 dark:bg-green-950/40 p-4 text-center">
@@ -191,13 +186,13 @@ export function DiffPage() {
                   {diff.removed.length}
                 </p>
                 <p className="text-xs text-green-600 dark:text-green-400 uppercase tracking-wide mt-1">
-                  Corrigées
+                  {t("diff.label_removed")}
                 </p>
               </div>
               <div className="rounded-lg border bg-muted p-4 text-center">
                 <p className="text-2xl font-bold text-foreground">{diff.unchanged.length}</p>
                 <p className="text-xs text-muted-foreground uppercase tracking-wide mt-1">
-                  Inchangées
+                  {t("diff.label_unchanged")}
                 </p>
               </div>
             </div>
@@ -205,18 +200,15 @@ export function DiffPage() {
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <h2 className="font-semibold text-sm mb-2 text-red-700 dark:text-red-400">
-                  Nouvelles vulnérabilités ({diff.added.length})
+                  {t("diff.added_title", { count: diff.added.length })}
                 </h2>
-                <VulnList
-                  items={diff.added}
-                  emptyMessage="Aucune nouvelle vulnérabilité — bonne nouvelle !"
-                />
+                <VulnList items={diff.added} emptyMessage={t("diff.added_empty")} />
               </div>
               <div>
                 <h2 className="font-semibold text-sm mb-2 text-green-700 dark:text-green-400">
-                  Vulnérabilités corrigées ({diff.removed.length})
+                  {t("diff.removed_title", { count: diff.removed.length })}
                 </h2>
-                <VulnList items={diff.removed} emptyMessage="Aucune correction détectée." />
+                <VulnList items={diff.removed} emptyMessage={t("diff.removed_empty")} />
               </div>
             </div>
           </>
