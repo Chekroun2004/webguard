@@ -405,6 +405,12 @@ export function DashboardPage() {
             >
               Clés API
             </Link>
+            <Link
+              to="/audit"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Journal d'activité
+            </Link>
             <ThemeToggle />
             <button
               onClick={logout}

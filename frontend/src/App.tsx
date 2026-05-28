@@ -8,6 +8,7 @@ import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { ScanDetailPage } from "@/pages/ScanDetailPage";
 import { ApiKeysPage } from "@/pages/ApiKeysPage";
+import { AuditPage } from "@/pages/AuditPage";
 import { ScheduledScansPage } from "@/pages/ScheduledScansPage";
 import { SecurityPage } from "@/pages/SecurityPage";
 import { WebhooksPage } from "@/pages/WebhooksPage";
@@ -62,6 +63,14 @@ function App() {
         element={
           <ProtectedRoute>
             <ApiKeysPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/audit"
+        element={
+          <ProtectedRoute>
+            <AuditPage />
           </ProtectedRoute>
         }
       />
