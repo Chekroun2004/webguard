@@ -29,6 +29,7 @@ export default [
         RequestInit: "readonly",
         Response: "readonly",
         URL: "readonly",
+        URLSearchParams: "readonly",
         Blob: "readonly",
         HTMLAnchorElement: "readonly",
         HTMLElement: "readonly",
