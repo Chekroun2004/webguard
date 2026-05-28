@@ -61,9 +61,11 @@ class TestEnrollConfirm:
         status_body = (await client.get(STATUS, headers=auth_headers)).json()
         assert status_body == {"enabled": True, "pending_setup": False}
 
-        events = (await db_session.execute(
-            select(AuditEvent).where(AuditEvent.action == "totp.enable")
-        )).scalars().all()
+        events = (
+            (await db_session.execute(select(AuditEvent).where(AuditEvent.action == "totp.enable")))
+            .scalars()
+            .all()
+        )
         assert len(events) == 1 and events[0].status == "success"
 
     async def test_confirm_with_invalid_code_rejected(

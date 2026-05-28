@@ -24,6 +24,7 @@ async def _seed_event(db_session, user_id, action="scan.create", status="success
 async def _user_a_id(db_session) -> int:
     # auth_headers registers tester@example.com — fetch its id from the DB
     from sqlalchemy import select
+
     res = await db_session.execute(select(User).where(User.email == "tester@example.com"))
     return res.scalar_one().id
 

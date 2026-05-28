@@ -17,20 +17,22 @@ from app.repositories.audit import create_audit_event
 
 logger = logging.getLogger(__name__)
 
-ACTIONS: frozenset[str] = frozenset({
-    "scan.create",
-    "scheduled.create",
-    "scheduled.update",
-    "scheduled.delete",
-    "domain.create",
-    "api_key.create",
-    "api_key.revoke",
-    "webhook.create",
-    "webhook.delete",
-    "webhook.test",
-    "totp.enable",
-    "totp.disable",
-})
+ACTIONS: frozenset[str] = frozenset(
+    {
+        "scan.create",
+        "scheduled.create",
+        "scheduled.update",
+        "scheduled.delete",
+        "domain.create",
+        "api_key.create",
+        "api_key.revoke",
+        "webhook.create",
+        "webhook.delete",
+        "webhook.test",
+        "totp.enable",
+        "totp.disable",
+    }
+)
 
 UA_MAX_LEN = 512
 
@@ -76,7 +78,5 @@ class AuditService:
             await self._db.flush()
             return event
         except Exception:  # pragma: no cover - defensive
-            logger.warning(
-                "audit_log_failed action=%s user_id=%s", action, user_id, exc_info=True
-            )
+            logger.warning("audit_log_failed action=%s user_id=%s", action, user_id, exc_info=True)
             return None

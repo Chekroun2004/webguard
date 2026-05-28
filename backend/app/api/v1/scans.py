@@ -90,9 +90,12 @@ async def create_scan(
     else:
         background_tasks.add_task(_run_scan_in_process, scan.id)
     await AuditService(db).log(
-        current_user.id, "scan.create",
-        target_type="scan", target_id=scan.id,
-        status="success", request=request,
+        current_user.id,
+        "scan.create",
+        target_type="scan",
+        target_id=scan.id,
+        status="success",
+        request=request,
     )
     return _to_out(scan)
 

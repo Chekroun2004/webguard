@@ -29,9 +29,7 @@ async def _login_user_b(client: AsyncClient) -> dict:
 
 
 class TestWebhookCreate:
-    async def test_creates_slack_webhook(
-        self, client: AsyncClient, auth_headers: dict, db_session
-    ):
+    async def test_creates_slack_webhook(self, client: AsyncClient, auth_headers: dict, db_session):
         resp = await client.post(
             URL,
             json={"url": SLACK_URL, "provider": "slack"},
@@ -45,10 +43,14 @@ class TestWebhookCreate:
         assert "id" in data
 
         events = (
-            await db_session.execute(
-                select(AuditEvent).where(AuditEvent.action == "webhook.create")
+            (
+                await db_session.execute(
+                    select(AuditEvent).where(AuditEvent.action == "webhook.create")
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(events) == 1 and events[0].status == "success"
 
     async def test_creates_discord_webhook(self, client: AsyncClient, auth_headers: dict):

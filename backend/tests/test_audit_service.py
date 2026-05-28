@@ -16,8 +16,11 @@ async def test_log_creates_event_with_request_context(db_session, registered_use
     request.headers = {"user-agent": "Mozilla/5.0"}
 
     event = await AuditService(db_session).log(
-        registered_user["id"], "scan.create",
-        target_type="scan", target_id=1, request=request,
+        registered_user["id"],
+        "scan.create",
+        target_type="scan",
+        target_id=1,
+        request=request,
     )
     assert event is not None
     assert event.ip == "10.1.2.3"
@@ -51,8 +54,11 @@ async def test_log_truncates_long_user_agent(db_session, registered_user):
 @pytest.mark.asyncio
 async def test_log_records_failure_status(db_session, registered_user):
     event = await AuditService(db_session).log(
-        registered_user["id"], "webhook.delete",
-        target_type="webhook", target_id=42, status="failure",
+        registered_user["id"],
+        "webhook.delete",
+        target_type="webhook",
+        target_id=42,
+        status="failure",
     )
     assert event is not None
     assert event.status == "failure"

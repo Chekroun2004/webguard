@@ -40,10 +40,14 @@ class TestApiKeyCreate:
         assert listed[0]["prefix"] == body["prefix"]
 
         events = (
-            await db_session.execute(
-                select(AuditEvent).where(AuditEvent.action == "api_key.create")
+            (
+                await db_session.execute(
+                    select(AuditEvent).where(AuditEvent.action == "api_key.create")
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(events) == 1 and events[0].status == "success"
 
     async def test_list_isolates_users(self, client: AsyncClient, auth_headers: dict):
@@ -100,8 +104,12 @@ class TestApiKeyRevoke:
         assert resp.status_code == 403
 
         events = (
-            await db_session.execute(
-                select(AuditEvent).where(AuditEvent.action == "api_key.revoke")
+            (
+                await db_session.execute(
+                    select(AuditEvent).where(AuditEvent.action == "api_key.revoke")
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(events) == 1 and events[0].status == "failure"

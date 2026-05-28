@@ -24,9 +24,7 @@ def _user_b_json():
 
 
 class TestDomainRegister:
-    async def test_creates_domain_record(
-        self, client: AsyncClient, auth_headers: dict, db_session
-    ):
+    async def test_creates_domain_record(self, client: AsyncClient, auth_headers: dict, db_session):
         resp = await client.post(
             URL,
             json={"domain": "example.com", "method": "file"},
@@ -41,10 +39,14 @@ class TestDomainRegister:
         assert data["verified_at"] is None
 
         events = (
-            await db_session.execute(
-                select(AuditEvent).where(AuditEvent.action == "domain.create")
+            (
+                await db_session.execute(
+                    select(AuditEvent).where(AuditEvent.action == "domain.create")
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         assert len(events) == 1 and events[0].status == "success"
 
     async def test_default_method_is_file(self, client: AsyncClient, auth_headers: dict):

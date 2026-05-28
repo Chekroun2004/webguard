@@ -53,9 +53,14 @@ async def test_list_audit_events_filters_by_action(db_session, registered_user):
     uid = registered_user["id"]
     for action in ("scan.create", "scan.create", "webhook.delete"):
         await create_audit_event(
-            db_session, user_id=uid, action=action,
-            target_type=None, target_id=None, status="success",
-            ip=None, user_agent=None,
+            db_session,
+            user_id=uid,
+            action=action,
+            target_type=None,
+            target_id=None,
+            status="success",
+            ip=None,
+            user_agent=None,
         )
     await db_session.flush()
 
@@ -70,14 +75,24 @@ async def test_list_audit_events_filters_by_action(db_session, registered_user):
 async def test_list_audit_events_filters_by_status(db_session, registered_user):
     uid = registered_user["id"]
     await create_audit_event(
-        db_session, user_id=uid, action="scan.create",
-        target_type=None, target_id=None, status="success",
-        ip=None, user_agent=None,
+        db_session,
+        user_id=uid,
+        action="scan.create",
+        target_type=None,
+        target_id=None,
+        status="success",
+        ip=None,
+        user_agent=None,
     )
     await create_audit_event(
-        db_session, user_id=uid, action="scan.create",
-        target_type=None, target_id=None, status="failure",
-        ip=None, user_agent=None,
+        db_session,
+        user_id=uid,
+        action="scan.create",
+        target_type=None,
+        target_id=None,
+        status="failure",
+        ip=None,
+        user_agent=None,
     )
     await db_session.flush()
 
@@ -96,12 +111,24 @@ async def test_list_audit_events_scoped_to_user(db_session, registered_user):
     await db_session.flush()
 
     await create_audit_event(
-        db_session, user_id=registered_user["id"], action="scan.create",
-        target_type=None, target_id=None, status="success", ip=None, user_agent=None,
+        db_session,
+        user_id=registered_user["id"],
+        action="scan.create",
+        target_type=None,
+        target_id=None,
+        status="success",
+        ip=None,
+        user_agent=None,
     )
     await create_audit_event(
-        db_session, user_id=other.id, action="scan.create",
-        target_type=None, target_id=None, status="success", ip=None, user_agent=None,
+        db_session,
+        user_id=other.id,
+        action="scan.create",
+        target_type=None,
+        target_id=None,
+        status="success",
+        ip=None,
+        user_agent=None,
     )
     await db_session.flush()
 

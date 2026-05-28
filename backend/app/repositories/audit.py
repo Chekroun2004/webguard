@@ -60,9 +60,7 @@ async def list_audit_events(
     total = (await db.execute(count_query)).scalar_one()
 
     paged = (
-        base.order_by(AuditEvent.created_at.desc())
-        .limit(page_size)
-        .offset((page - 1) * page_size)
+        base.order_by(AuditEvent.created_at.desc()).limit(page_size).offset((page - 1) * page_size)
     )
     items = list((await db.execute(paged)).scalars().all())
     return items, total

@@ -60,9 +60,15 @@ class TestScheduledCreate:
         assert data["last_run_at"] is None
         assert data["next_run_at"] is not None
 
-        events = (await db_session.execute(
-            select(AuditEvent).where(AuditEvent.action == "scheduled.create")
-        )).scalars().all()
+        events = (
+            (
+                await db_session.execute(
+                    select(AuditEvent).where(AuditEvent.action == "scheduled.create")
+                )
+            )
+            .scalars()
+            .all()
+        )
         assert len(events) == 1 and events[0].status == "success"
 
     async def test_rejects_invalid_cron(self, client: AsyncClient, auth_headers: dict):
@@ -253,7 +259,13 @@ class TestScheduledDelete:
         resp = await client.delete(f"{URL}/{created['id']}", headers=headers_b)
         assert resp.status_code == 403
 
-        events = (await db_session.execute(
-            select(AuditEvent).where(AuditEvent.action == "scheduled.delete")
-        )).scalars().all()
+        events = (
+            (
+                await db_session.execute(
+                    select(AuditEvent).where(AuditEvent.action == "scheduled.delete")
+                )
+            )
+            .scalars()
+            .all()
+        )
         assert len(events) == 1 and events[0].status == "failure"

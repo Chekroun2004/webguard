@@ -32,9 +32,11 @@ class TestCreateScan:
         assert data["status"] == "pending"
         assert data["findings"] == []
 
-        events = (await db_session.execute(
-            select(AuditEvent).where(AuditEvent.action == "scan.create")
-        )).scalars().all()
+        events = (
+            (await db_session.execute(select(AuditEvent).where(AuditEvent.action == "scan.create")))
+            .scalars()
+            .all()
+        )
         assert len(events) == 1
         assert events[0].status == "success"
         assert events[0].target_id == resp.json()["id"]
