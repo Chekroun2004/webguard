@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import httpx
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
 from app.db.models.user import User
 from app.schemas.webhook import WebhookCreate, WebhookOut, WebhookUpdate
+from app.services.audit import AuditService
 from app.services.webhook import (
     WebhookForbiddenError,
     WebhookNotFoundError,
@@ -21,6 +22,7 @@ router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=WebhookOut)
 async def create_webhook_route(
+    request: Request,
     body: WebhookCreate = Body(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -31,6 +33,14 @@ async def create_webhook_route(
         url=str(body.url),
         provider=body.provider,
         is_active=body.is_active,
+    )
+    await AuditService(db).log(
+        current_user.id,
+        "webhook.create",
+        target_type="webhook",
+        target_id=record.id,
+        status="success",
+        request=request,
     )
     return WebhookOut.model_validate(record)
 
@@ -77,35 +87,79 @@ async def update_webhook_route(
 )
 async def delete_webhook_route(
     webhook_id: int,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> None:
+    audit = AuditService(db)
     service = WebhookService(db)
     try:
         await service.delete(webhook_id, current_user.id)
     except WebhookNotFoundError as exc:
+        await audit.log(
+            current_user.id,
+            "webhook.delete",
+            target_type="webhook",
+            target_id=webhook_id,
+            status="failure",
+            request=request,
+        )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Webhook not found"
         ) from exc
     except WebhookForbiddenError as exc:
+        await audit.log(
+            current_user.id,
+            "webhook.delete",
+            target_type="webhook",
+            target_id=webhook_id,
+            status="failure",
+            request=request,
+        )
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied") from exc
+    await audit.log(
+        current_user.id,
+        "webhook.delete",
+        target_type="webhook",
+        target_id=webhook_id,
+        status="success",
+        request=request,
+    )
 
 
 @router.post("/{webhook_id}/test", status_code=status.HTTP_200_OK)
 async def test_webhook_route(
     webhook_id: int,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict[str, bool]:
     """Send a sample payload to the webhook to verify it works."""
+    audit = AuditService(db)
     service = WebhookService(db)
     try:
         webhook = await service.get_by_id(webhook_id, current_user.id)
     except WebhookNotFoundError as exc:
+        await audit.log(
+            current_user.id,
+            "webhook.test",
+            target_type="webhook",
+            target_id=webhook_id,
+            status="failure",
+            request=request,
+        )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Webhook not found"
         ) from exc
     except WebhookForbiddenError as exc:
+        await audit.log(
+            current_user.id,
+            "webhook.test",
+            target_type="webhook",
+            target_id=webhook_id,
+            status="failure",
+            request=request,
+        )
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied") from exc
 
     sample_scan = _SampleScan()
@@ -115,8 +169,24 @@ async def test_webhook_route(
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.post(webhook.url, json=payload)
             response.raise_for_status()
+        await audit.log(
+            current_user.id,
+            "webhook.test",
+            target_type="webhook",
+            target_id=webhook_id,
+            status="success",
+            request=request,
+        )
         return {"delivered": True}
     except Exception:
+        await audit.log(
+            current_user.id,
+            "webhook.test",
+            target_type="webhook",
+            target_id=webhook_id,
+            status="failure",
+            request=request,
+        )
         return {"delivered": False}
 
 
