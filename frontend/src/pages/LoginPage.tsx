@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ShieldCheck } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 
 import { useLogin, useLoginTotp } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -44,113 +47,142 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <div className="w-full max-w-md space-y-6">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="h-7 w-7 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight">
-            <span className="text-[#6366f1]">Web</span>Guard
-          </h1>
+    <div className="min-h-screen bg-background flex">
+      {/* Left panel — brand */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-brand flex-col justify-between p-12 text-white">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <ShieldAlert className="h-5 w-5 text-white" />
+          </div>
+          <span className="font-bold text-xl tracking-tight">WebGuard</span>
         </div>
 
-        <div className="rounded-lg border bg-card p-6 space-y-5">
-          <h2 className="text-lg font-semibold">
-            {pendingToken ? "Vérification 2FA" : "Connexion"}
+        <div className="space-y-4">
+          <h2 className="text-3xl font-bold leading-tight">
+            Détectez les failles de sécurité avant que les attaquants ne le fassent.
           </h2>
+          <p className="text-white/70 text-sm leading-relaxed">
+            13 scanners actifs et passifs. Rapports PDF. Scans planifiés. Webhooks. Authentification
+            à deux facteurs. Tout ce qu'il faut pour sécuriser votre surface d'attaque web.
+          </p>
+        </div>
 
-          {error && (
-            <p className="text-sm text-destructive rounded-md bg-destructive/10 px-3 py-2">
-              {error}
-            </p>
-          )}
+        <p className="text-white/40 text-xs">WebGuard — Portfolio Master IGOV · FSR-UM5 Rabat</p>
+      </div>
 
-          {!pendingToken ? (
-            <form onSubmit={handleCredentialsSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label htmlFor="email" className="text-sm font-medium">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-                />
-              </div>
+      {/* Right panel — form */}
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-md space-y-6">
+          {/* Mobile brand */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <div className="w-7 h-7 rounded-lg bg-gradient-brand flex items-center justify-center">
+              <span className="text-white text-xs font-bold">W</span>
+            </div>
+            <span className="font-bold text-lg">
+              <span className="text-[#6366f1]">Web</span>Guard
+            </span>
+          </div>
 
-              <div className="space-y-1.5">
-                <label htmlFor="password" className="text-sm font-medium">
-                  Mot de passe
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  required
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-                />
-              </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>{pendingToken ? "Vérification 2FA" : "Connexion"}</CardTitle>
+              <CardDescription>
+                {pendingToken
+                  ? "Entrez le code de votre application TOTP."
+                  : "Entrez vos identifiants pour accéder à votre espace."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {error && (
+                <p className="text-sm text-destructive rounded-lg bg-destructive/10 px-3 py-2 border border-destructive/20">
+                  {error}
+                </p>
+              )}
 
-              <button
-                type="submit"
-                disabled={login.isPending}
-                className="w-full rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
-              >
-                {login.isPending ? "Connexion…" : "Se connecter"}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleTotpSubmit} className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Entrez le code à 6 chiffres affiché par votre application TOTP.
-              </p>
-              <input
-                id="totp"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]{6}"
-                maxLength={6}
-                required
-                autoFocus
-                placeholder="123456"
-                value={totpCode}
-                onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm font-mono text-center tracking-widest focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-              />
-              <button
-                type="submit"
-                disabled={totpCode.length !== 6 || loginTotp.isPending}
-                className="w-full rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
-              >
-                {loginTotp.isPending ? "Vérification…" : "Valider"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setPendingToken(null);
-                  setTotpCode("");
-                  setError(null);
-                }}
-                className="w-full text-xs text-muted-foreground hover:text-foreground"
-              >
-                ← Recommencer
-              </button>
-            </form>
-          )}
+              {!pendingToken ? (
+                <form onSubmit={handleCredentialsSubmit} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label htmlFor="email" className="text-sm font-medium">
+                      Email
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      required
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label htmlFor="password" className="text-sm font-medium">
+                      Mot de passe
+                    </label>
+                    <Input
+                      id="password"
+                      type="password"
+                      required
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" disabled={login.isPending} className="w-full" size="lg">
+                    {login.isPending ? "Connexion…" : "Se connecter"}
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleTotpSubmit} className="space-y-4">
+                  <Input
+                    id="totp"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]{6}"
+                    maxLength={6}
+                    required
+                    autoFocus
+                    placeholder="123456"
+                    value={totpCode}
+                    onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
+                    className="font-mono text-center tracking-[0.5em] text-lg h-12"
+                  />
+                  <Button
+                    type="submit"
+                    disabled={totpCode.length !== 6 || loginTotp.isPending}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {loginTotp.isPending ? "Vérification…" : "Valider"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-muted-foreground"
+                    onClick={() => {
+                      setPendingToken(null);
+                      setTotpCode("");
+                      setError(null);
+                    }}
+                  >
+                    ← Recommencer
+                  </Button>
+                </form>
+              )}
 
-          {!pendingToken && (
-            <p className="text-sm text-muted-foreground text-center">
-              Pas encore de compte ?{" "}
-              <Link to="/register" className="font-medium underline underline-offset-4">
-                S'inscrire
-              </Link>
-            </p>
-          )}
+              {!pendingToken && (
+                <p className="text-sm text-muted-foreground text-center">
+                  Pas encore de compte ?{" "}
+                  <Link
+                    to="/register"
+                    className="font-medium text-primary hover:underline underline-offset-4"
+                  >
+                    S'inscrire
+                  </Link>
+                </p>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

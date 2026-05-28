@@ -45,6 +45,13 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      backgroundImage: {
+        "gradient-brand": "linear-gradient(135deg, #6366f1, #8b5cf6)",
+        "gradient-brand-r": "linear-gradient(to right, #6366f1, #8b5cf6)",
+      },
+      fontFamily: {
+        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

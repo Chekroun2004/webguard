@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { AppShell } from "@/components/AppShell";
 import {
   useTotpConfirm,
   useTotpDisable,
@@ -174,35 +173,11 @@ export function SecurityPage() {
   const { data: status, isLoading, refetch } = useTotpStatus();
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container flex h-14 items-center justify-between">
-          <div className="flex items-center gap-4">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            <span className="font-semibold">
-              <span className="text-[#6366f1]">Web</span>Guard
-            </span>
-            <span className="text-muted-foreground">/</span>
-            <span className="text-sm">Sécurité</span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </header>
-
-      <main className="container py-10 space-y-8 max-w-2xl">
-        <div className="flex items-center gap-3">
-          <Link
-            to="/dashboard"
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Tableau de bord
-          </Link>
-        </div>
-
+    <AppShell>
+      <main className="container py-8 space-y-8 max-w-2xl">
         <div>
-          <h1 className="text-2xl font-bold">Sécurité du compte</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold tracking-tight">Sécurité du compte</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
             Renforcez la connexion à votre compte WebGuard.
           </p>
         </div>
@@ -220,6 +195,6 @@ export function SecurityPage() {
           )}
         </div>
       </main>
-    </div>
+    </AppShell>
   );
 }

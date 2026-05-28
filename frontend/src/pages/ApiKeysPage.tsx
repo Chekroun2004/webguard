@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Copy, Loader2, ShieldCheck, Trash2 } from "lucide-react";
+import { AlertTriangle, Copy, Loader2, Trash2 } from "lucide-react";
 
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { AppShell } from "@/components/AppShell";
 import {
   useApiKeysList,
   useCreateApiKey,
@@ -173,52 +172,29 @@ export function ApiKeysPage() {
   const [created, setCreated] = useState<ApiKeyCreated | null>(null);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container flex h-14 items-center justify-between">
-          <div className="flex items-center gap-4">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            <span className="font-semibold">
-              <span className="text-[#6366f1]">Web</span>Guard
-            </span>
-            <span className="text-muted-foreground">/</span>
-            <span className="text-sm">Clés API</span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </header>
-
-      <main className="container py-10 space-y-8 max-w-2xl">
-        <div className="flex items-center gap-3">
-          <Link
-            to="/dashboard"
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Tableau de bord
-          </Link>
-        </div>
-
+    <AppShell>
+      <main className="container py-8 space-y-8 max-w-2xl">
         <div>
-          <h1 className="text-2xl font-bold">Clés API</h1>
-          <p className="text-muted-foreground mt-1">
-            Utilisez une clé API à la place du JWT pour automatiser les scans (CI, CLI…).
-            Authentifiez-vous via le header <code>X-API-Key: wgk_xxx</code>.
+          <h1 className="text-2xl font-bold tracking-tight">Clés API</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Authentifiez-vous via le header{" "}
+            <code className="text-xs bg-muted px-1.5 py-0.5 rounded">X-API-Key: wgk_xxx</code>{" "}
+            pour automatiser les scans (CI, CLI…).
           </p>
         </div>
 
         <CreateApiKeyForm onCreated={setCreated} />
 
         <div className="space-y-3">
-          <h2 className="font-semibold">Clés existantes</h2>
+          <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+            Clés existantes
+          </h2>
           {isLoading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
             </div>
           ) : !keys || keys.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Aucune clé. Créez-en une ci-dessus.
-            </p>
+            <p className="text-sm text-muted-foreground">Aucune clé. Créez-en une ci-dessus.</p>
           ) : (
             <div className="space-y-2">
               {keys.map((k) => (
@@ -230,6 +206,6 @@ export function ApiKeysPage() {
       </main>
 
       {created && <CreatedKeyModal created={created} onClose={() => setCreated(null)} />}
-    </div>
+    </AppShell>
   );
 }

@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ExternalLink, Loader2, LogOut, ShieldCheck } from "lucide-react";
+import { ExternalLink, Loader2, ScanLine } from "lucide-react";
 
-import { useCurrentUser, useLogout } from "@/hooks/useAuth";
 import { useCreateScan, useScanList, type ScanAuthConfig } from "@/hooks/useScan";
 import { useScanEvents } from "@/hooks/useScanEvents";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { ScanProgressBar } from "@/components/ScanProgressBar";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { AppShell } from "@/components/AppShell";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Spinner } from "@/components/ui/spinner";
 import { ApiError } from "@/lib/api";
 import type { Scan } from "@/types";
 
@@ -73,160 +77,145 @@ function ScanForm() {
     createScan.isPending || liveStatus === "pending" || liveStatus === "running";
 
   return (
-    <div className="rounded-lg border bg-card p-6 space-y-4">
-      <h2 className="font-semibold">Lancer un scan</h2>
-      {error && (
-        <p className="text-sm text-destructive rounded-md bg-destructive/10 px-3 py-2">{error}</p>
-      )}
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="flex gap-2">
-          <input
-            type="url"
-            required
-            placeholder="https://example.com"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            disabled={disabled}
-            className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-          />
+    <Card>
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2">
+          <ScanLine className="h-4 w-4 text-primary" />
+          Lancer un scan
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {error && (
+          <p className="text-sm text-destructive rounded-lg bg-destructive/10 px-3 py-2 border border-destructive/20">
+            {error}
+          </p>
+        )}
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="flex gap-2">
+            <Input
+              type="url"
+              required
+              placeholder="https://example.com"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              disabled={disabled}
+              className="flex-1 h-10"
+            />
+            <Button type="submit" disabled={disabled} size="lg" className="h-10 px-5">
+              {createScan.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Envoi…
+                </>
+              ) : (
+                "Scanner"
+              )}
+            </Button>
+          </div>
+
           <button
-            type="submit"
-            disabled={disabled}
-            className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-1.5"
+            type="button"
+            onClick={() => setAuthOpen((v) => !v)}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            aria-expanded={authOpen}
           >
-            {createScan.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Envoi…
-              </>
-            ) : (
-              "Scanner"
-            )}
+            {authOpen ? "▾" : "▸"} Authentification (optionnel)
           </button>
-        </div>
 
-        <button
-          type="button"
-          onClick={() => setAuthOpen((v) => !v)}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-          aria-expanded={authOpen}
-        >
-          {authOpen ? "▾" : "▸"} Authentification (optionnel)
-        </button>
-
-        {authOpen && (
-          <div className="space-y-3 rounded-md border border-dashed p-3 bg-muted/30">
-            <div className="flex gap-3 text-sm">
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="authMode"
-                  checked={authMode === "none"}
-                  onChange={() => setAuthMode("none")}
-                />
-                Aucune
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="authMode"
-                  checked={authMode === "cookie"}
-                  onChange={() => setAuthMode("cookie")}
-                />
-                Cookie de session
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="authMode"
-                  checked={authMode === "form_login"}
-                  onChange={() => setAuthMode("form_login")}
-                />
-                Login form
-              </label>
-            </div>
-
-            {authMode === "cookie" && (
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  required
-                  placeholder="Nom (ex: session)"
-                  value={cookieName}
-                  onChange={(e) => setCookieName(e.target.value)}
-                  className="rounded-md border bg-background px-3 py-2 text-sm"
-                />
-                <input
-                  type="text"
-                  required
-                  placeholder="Valeur"
-                  value={cookieValue}
-                  onChange={(e) => setCookieValue(e.target.value)}
-                  className="rounded-md border bg-background px-3 py-2 text-sm font-mono"
-                />
+          {authOpen && (
+            <div className="space-y-3 rounded-lg border border-dashed p-4 bg-muted/30">
+              <div className="flex gap-4 text-sm">
+                {(["none", "cookie", "form_login"] as const).map((mode) => (
+                  <label key={mode} className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="authMode"
+                      checked={authMode === mode}
+                      onChange={() => setAuthMode(mode)}
+                    />
+                    {mode === "none" ? "Aucune" : mode === "cookie" ? "Cookie" : "Login form"}
+                  </label>
+                ))}
               </div>
-            )}
 
-            {authMode === "form_login" && (
-              <div className="space-y-2">
-                <input
-                  type="url"
-                  required
-                  placeholder="URL du login (ex: https://example.com/login)"
-                  value={loginUrl}
-                  onChange={(e) => setLoginUrl(e.target.value)}
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                />
+              {authMode === "cookie" && (
                 <div className="grid grid-cols-2 gap-2">
-                  <input
+                  <Input
                     type="text"
                     required
-                    placeholder="Nom du champ user"
-                    value={usernameField}
-                    onChange={(e) => setUsernameField(e.target.value)}
-                    className="rounded-md border bg-background px-3 py-2 text-sm font-mono"
+                    placeholder="Nom (ex: session)"
+                    value={cookieName}
+                    onChange={(e) => setCookieName(e.target.value)}
                   />
-                  <input
+                  <Input
                     type="text"
                     required
-                    placeholder="Nom du champ password"
-                    value={passwordField}
-                    onChange={(e) => setPasswordField(e.target.value)}
-                    className="rounded-md border bg-background px-3 py-2 text-sm font-mono"
-                  />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Identifiant"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="rounded-md border bg-background px-3 py-2 text-sm"
-                  />
-                  <input
-                    type="password"
-                    required
-                    placeholder="Mot de passe"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="rounded-md border bg-background px-3 py-2 text-sm"
+                    placeholder="Valeur"
+                    value={cookieValue}
+                    onChange={(e) => setCookieValue(e.target.value)}
+                    className="font-mono"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Les identifiants sont chiffrés (Fernet) avant d'être stockés.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-      </form>
+              )}
 
-      {activeScanId && liveStatus && liveStatus !== "completed" && (
-        <ScanProgressBar status={liveStatus} />
-      )}
-      {liveStatus === "failed" && (
-        <p className="text-sm text-destructive">Le scan a échoué. Réessaie.</p>
-      )}
-    </div>
+              {authMode === "form_login" && (
+                <div className="space-y-2">
+                  <Input
+                    type="url"
+                    required
+                    placeholder="URL du login (ex: https://example.com/login)"
+                    value={loginUrl}
+                    onChange={(e) => setLoginUrl(e.target.value)}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      type="text"
+                      required
+                      placeholder="Champ username"
+                      value={usernameField}
+                      onChange={(e) => setUsernameField(e.target.value)}
+                      className="font-mono"
+                    />
+                    <Input
+                      type="text"
+                      required
+                      placeholder="Champ password"
+                      value={passwordField}
+                      onChange={(e) => setPasswordField(e.target.value)}
+                      className="font-mono"
+                    />
+                    <Input
+                      type="text"
+                      required
+                      placeholder="Identifiant"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                    />
+                    <Input
+                      type="password"
+                      required
+                      placeholder="Mot de passe"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Identifiants chiffrés (Fernet) avant stockage.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </form>
+
+        {activeScanId && liveStatus && liveStatus !== "completed" && (
+          <ScanProgressBar status={liveStatus} />
+        )}
+        {liveStatus === "failed" && (
+          <p className="text-sm text-destructive">Le scan a échoué. Réessaie.</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -242,11 +231,11 @@ function ScanCard({ scan }: { scan: Scan }) {
   const isPending = scan.status === "pending" || scan.status === "running";
 
   return (
-    <div className="rounded-lg border bg-card overflow-hidden">
+    <Card className="overflow-hidden">
       <button
         onClick={() => !isPending && setOpen((v) => !v)}
         disabled={isPending}
-        className="w-full text-left px-4 py-3 flex items-center justify-between hover:bg-muted/40 transition-colors disabled:cursor-default"
+        className="w-full text-left px-5 py-3.5 flex items-center justify-between hover:bg-muted/40 transition-colors disabled:cursor-default"
       >
         <div className="flex flex-col gap-0.5 min-w-0">
           <span className="text-sm font-medium truncate">{scan.url}</span>
@@ -256,18 +245,18 @@ function ScanCard({ scan }: { scan: Scan }) {
         </div>
         <div className="flex items-center gap-2 ml-4 shrink-0">
           {isPending ? (
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
               <Loader2 className="h-3 w-3 animate-spin" />
               {scan.status === "running" ? "Scan en cours…" : "En attente…"}
             </span>
           ) : scan.findings.length === 0 ? (
-            <span className="text-xs text-green-600 font-medium">✓ Aucune vulnérabilité</span>
+            <span className="text-xs text-emerald-600 font-medium dark:text-emerald-400">
+              ✓ Aucune vuln.
+            </span>
           ) : (
             <>
               {(["critical", "high", "medium", "low", "info"] as const).map((sev) =>
-                countBySeverity[sev] ? (
-                  <SeverityBadge key={sev} severity={sev} />
-                ) : null
+                countBySeverity[sev] ? <SeverityBadge key={sev} severity={sev} /> : null
               )}
               <span className="text-xs text-muted-foreground">
                 {scan.findings.length} trouvé{scan.findings.length > 1 ? "es" : "e"}
@@ -293,7 +282,7 @@ function ScanCard({ scan }: { scan: Scan }) {
       {open && scan.findings.length > 0 && (
         <div className="divide-y border-t">
           {scan.findings.map((f) => (
-            <div key={f.id} className="px-4 py-3 space-y-1">
+            <div key={f.id} className="px-5 py-3 space-y-1">
               <div className="flex items-center gap-2">
                 <SeverityBadge severity={f.severity} />
                 <span className="text-sm font-medium">{f.name}</span>
@@ -305,7 +294,7 @@ function ScanCard({ scan }: { scan: Scan }) {
                 </p>
               )}
               {f.evidence && (
-                <p className="text-xs font-mono text-muted-foreground bg-muted px-2 py-1 rounded">
+                <p className="text-xs font-mono text-muted-foreground bg-muted px-2 py-1 rounded-md">
                   {f.evidence}
                 </p>
               )}
@@ -315,11 +304,11 @@ function ScanCard({ scan }: { scan: Scan }) {
       )}
 
       {open && scan.findings.length === 0 && (
-        <p className="px-4 py-3 text-sm text-muted-foreground border-t">
-          Aucune vulnérabilité détectée — site bien configuré 🎉
+        <p className="px-5 py-3 text-sm text-muted-foreground border-t">
+          Aucune vulnérabilité détectée.
         </p>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -330,17 +319,19 @@ function ScanHistory() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-muted-foreground text-sm">
-        <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
+      <div className="flex items-center gap-2 text-muted-foreground text-sm py-8 justify-center">
+        <Spinner size="sm" />
+        Chargement…
       </div>
     );
   }
 
   if (!scans || scans.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Aucun scan effectué. Lancez votre premier scan ci-dessus.
-      </p>
+      <EmptyState
+        title="Aucun scan effectué"
+        description="Lancez votre premier scan ci-dessus pour commencer à détecter les vulnérabilités."
+      />
     );
   }
 
@@ -356,90 +347,25 @@ function ScanHistory() {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export function DashboardPage() {
-  const { data: user } = useCurrentUser();
-  const logout = useLogout();
-
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container flex h-14 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            <span className="font-semibold"><span className="text-[#6366f1]">Web</span>Guard</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground hidden sm:block">{user?.email}</span>
-            <Link
-              to="/diff"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Comparer
-            </Link>
-            <Link
-              to="/domains"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Mes domaines
-            </Link>
-            <Link
-              to="/scheduled"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Scans planifiés
-            </Link>
-            <Link
-              to="/webhooks"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Webhooks
-            </Link>
-            <Link
-              to="/security"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Sécurité
-            </Link>
-            <Link
-              to="/api-keys"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Clés API
-            </Link>
-            <Link
-              to="/audit"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Journal d'activité
-            </Link>
-            <ThemeToggle />
-            <button
-              onClick={logout}
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <LogOut className="h-4 w-4" />
-              Déconnexion
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="container py-10 space-y-8">
+    <AppShell>
+      <main className="container py-8 space-y-8 max-w-4xl">
         <div>
-          <h1 className="text-2xl font-bold">
-            Bonjour, {user?.full_name ?? user?.email} 👋
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Scannez un site pour détecter les en-têtes de sécurité manquants.
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Lancez un scan pour détecter les en-têtes de sécurité manquants.
           </p>
         </div>
 
         <ScanForm />
 
         <div className="space-y-3">
-          <h2 className="font-semibold">Historique des scans</h2>
+          <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+            Historique des scans
+          </h2>
           <ScanHistory />
         </div>
       </main>
-    </div>
+    </AppShell>
   );
 }

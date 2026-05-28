@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Download, FileJson, FileText, Loader2, ShieldCheck } from "lucide-react";
+import { Download, FileJson, FileText, Loader2 } from "lucide-react";
 import {
   Cell,
   Legend,
@@ -10,8 +10,8 @@ import {
   Tooltip,
 } from "recharts";
 
+import { AppShell } from "@/components/AppShell";
 import { SeverityBadge } from "@/components/SeverityBadge";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { useScan } from "@/hooks/useScan";
 import { tokenStorage } from "@/lib/auth";
 import type { Vulnerability } from "@/types";
@@ -155,20 +155,24 @@ export function ScanDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
+      <AppShell>
+        <div className="flex-1 flex items-center justify-center py-24">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </AppShell>
     );
   }
 
   if (!scan) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <p className="text-muted-foreground">Scan introuvable.</p>
-        <Link to="/dashboard" className="text-sm text-primary hover:underline">
-          Retour au tableau de bord
-        </Link>
-      </div>
+      <AppShell>
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <p className="text-muted-foreground">Scan introuvable.</p>
+          <Link to="/dashboard" className="text-sm text-primary hover:underline">
+            Retour au tableau de bord
+          </Link>
+        </div>
+      </AppShell>
     );
   }
 
@@ -183,26 +187,7 @@ export function ScanDetailPage() {
   }, {});
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container flex h-14 items-center justify-between">
-          <div className="flex items-center gap-3">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            <span className="font-semibold"><span className="text-[#6366f1]">Web</span>Guard</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <Link
-              to="/dashboard"
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Tableau de bord
-            </Link>
-          </div>
-        </div>
-      </header>
-
+    <AppShell>
       <main className="container py-8 space-y-6 max-w-4xl">
         {/* Header */}
         <div className="space-y-1">
@@ -290,6 +275,6 @@ export function ScanDetailPage() {
           )}
         </div>
       </main>
-    </div>
+    </AppShell>
   );
 }

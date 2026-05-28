@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, GitCompare, Loader2, ShieldCheck } from "lucide-react";
+import { GitCompare, Loader2 } from "lucide-react";
 
+import { AppShell } from "@/components/AppShell";
 import { SeverityBadge } from "@/components/SeverityBadge";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { useScanList } from "@/hooks/useScan";
 import { useScanDiff } from "@/hooks/useScanDiff";
 import type { Scan, Vulnerability } from "@/types";
@@ -70,30 +69,7 @@ export function DiffPage() {
   const { data: diff, isLoading: diffLoading, error } = useScanDiff(oldId, newId);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container flex h-14 items-center justify-between">
-          <div className="flex items-center gap-3">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            <span className="font-semibold">
-              <span className="text-[#6366f1]">Web</span>Guard
-            </span>
-            <span className="text-muted-foreground">/</span>
-            <span className="text-sm">Comparer des scans</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <Link
-              to="/dashboard"
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Tableau de bord
-            </Link>
-          </div>
-        </div>
-      </header>
-
+    <AppShell>
       <main className="container py-8 space-y-6 max-w-5xl">
         <div className="space-y-1">
           <h1 className="text-xl font-bold flex items-center gap-2">
@@ -218,6 +194,6 @@ export function DiffPage() {
           </>
         )}
       </main>
-    </div>
+    </AppShell>
   );
 }

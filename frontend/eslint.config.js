@@ -34,6 +34,12 @@ export default [
         HTMLAnchorElement: "readonly",
         HTMLElement: "readonly",
         HTMLButtonElement: "readonly",
+        HTMLDivElement: "readonly",
+        HTMLInputElement: "readonly",
+        HTMLHeadingElement: "readonly",
+        HTMLParagraphElement: "readonly",
+        HTMLSelectElement: "readonly",
+        HTMLTextAreaElement: "readonly",
         MediaQueryListEvent: "readonly",
         // Node globals (vite.config.ts)
         __dirname: "readonly",

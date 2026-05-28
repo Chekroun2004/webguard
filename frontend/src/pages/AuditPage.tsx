@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Loader2, ScrollText, ShieldCheck } from "lucide-react";
+import { Loader2, ScrollText } from "lucide-react";
 
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { AppShell } from "@/components/AppShell";
 import { useAuditEvents } from "@/hooks/useAudit";
 import { ACTION_LABELS } from "@/types/audit";
 import type { AuditAction, AuditFilters } from "@/types/audit";
@@ -34,40 +33,15 @@ export function AuditPage() {
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container flex h-14 items-center justify-between">
-          <div className="flex items-center gap-4">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            <span className="font-semibold">
-              <span className="text-[#6366f1]">Web</span>Guard
-            </span>
-            <span className="text-muted-foreground">/</span>
-            <span className="text-sm">Journal d'activité</span>
-          </div>
-          <ThemeToggle />
-        </div>
-      </header>
-
-      <main className="container py-10 space-y-8 max-w-5xl">
-        <div className="flex items-center gap-3">
-          <Link
-            to="/dashboard"
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Tableau de bord
-          </Link>
-        </div>
-
+    <AppShell>
+      <main className="container py-8 space-y-8 max-w-5xl">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <ScrollText className="h-6 w-6 text-[#6366f1]" />
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <ScrollText className="h-5 w-5 text-primary" />
             Journal d'activité
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Historique des actions sensibles sur votre compte (scans, clés API,
-            webhooks, 2FA…).
+          <p className="text-muted-foreground mt-1 text-sm">
+            Historique des actions sensibles (scans, clés API, webhooks, 2FA…).
           </p>
         </div>
 
@@ -267,6 +241,6 @@ export function AuditPage() {
           </div>
         )}
       </main>
-    </div>
+    </AppShell>
   );
 }
