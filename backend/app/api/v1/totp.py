@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
@@ -13,6 +13,7 @@ from app.schemas.auth import (
     TotpEnrollResponse,
     TotpStatus,
 )
+from app.services.audit import AuditService
 from app.services.totp_service import (
     InvalidTotpCodeError,
     TotpNotEnrolledError,
@@ -46,10 +47,12 @@ async def totp_enroll(
 
 @router.post("/confirm", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def totp_confirm(
+    request: Request,
     body: TotpConfirmRequest = Body(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> None:
+    audit = AuditService(db)
     try:
         await TotpService(db).confirm(current_user, body.code)
     except TotpNotEnrolledError as exc:
@@ -58,17 +61,21 @@ async def totp_confirm(
             detail="Aucun secret 2FA en attente — lancez d'abord /enroll.",
         ) from exc
     except InvalidTotpCodeError as exc:
+        await audit.log(current_user.id, "totp.enable", status="failure", request=request)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Code 2FA invalide."
         ) from exc
+    await audit.log(current_user.id, "totp.enable", status="success", request=request)
 
 
 @router.post("/disable", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 async def totp_disable(
+    request: Request,
     body: TotpDisableRequest = Body(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> None:
+    audit = AuditService(db)
     try:
         await TotpService(db).disable(current_user, body.code)
     except TotpNotEnrolledError as exc:
@@ -77,6 +84,8 @@ async def totp_disable(
             detail="2FA non activée sur ce compte.",
         ) from exc
     except InvalidTotpCodeError as exc:
+        await audit.log(current_user.id, "totp.disable", status="failure", request=request)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Code 2FA invalide."
         ) from exc
+    await audit.log(current_user.id, "totp.disable", status="success", request=request)

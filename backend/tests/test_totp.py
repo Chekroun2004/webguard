@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import pyotp
 from httpx import AsyncClient
+from sqlalchemy import select
+
+from app.db.models.audit_event import AuditEvent
 
 REG = "/api/v1/auth/register"
 LOGIN = "/api/v1/auth/login"
@@ -46,7 +49,9 @@ class TestEnrollConfirm:
         assert body["otpauth_uri"].startswith("otpauth://totp/")
         assert "issuer=WebGuard" in body["otpauth_uri"]
 
-    async def test_confirm_with_valid_code_enables(self, client: AsyncClient, auth_headers: dict):
+    async def test_confirm_with_valid_code_enables(
+        self, client: AsyncClient, auth_headers: dict, db_session
+    ):
         enroll = (await client.post(ENROLL, headers=auth_headers)).json()
         secret = enroll["secret"]
 
@@ -55,6 +60,11 @@ class TestEnrollConfirm:
 
         status_body = (await client.get(STATUS, headers=auth_headers)).json()
         assert status_body == {"enabled": True, "pending_setup": False}
+
+        events = (await db_session.execute(
+            select(AuditEvent).where(AuditEvent.action == "totp.enable")
+        )).scalars().all()
+        assert len(events) == 1 and events[0].status == "success"
 
     async def test_confirm_with_invalid_code_rejected(
         self, client: AsyncClient, auth_headers: dict
