@@ -30,7 +30,7 @@ async def test_create_audit_event_persists_row(db_session, registered_user):
 @pytest.mark.asyncio
 async def test_list_audit_events_paginates(db_session, registered_user):
     uid = registered_user["id"]
-    for i in range(5):
+    for _ in range(5):
         await create_audit_event(
             db_session,
             user_id=uid,
