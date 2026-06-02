@@ -19,7 +19,7 @@ jinja2==3.1.4
 weasyprint==62.3
 pydyf==0.11.0
 slowapi==0.1.9
-limits==3.14.1
+limits==5.8.0
 aiosmtplib==3.0.1
 croniter==2.0.7
 pyotp==2.9.0
