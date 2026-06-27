@@ -1,14 +1,16 @@
 # WebGuard
 
-Scanner de vulnérabilités web — projet portfolio Master IGOV, FSR-UM5 Rabat.
+**Web vulnerability scanner SaaS** — Full-stack security tool built with FastAPI + React + Docker.
 
 [![CI](https://github.com/Chekroun2004/webguard/actions/workflows/ci.yml/badge.svg)](https://github.com/Chekroun2004/webguard/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/Chekroun2004/webguard/branch/main/graph/badge.svg)](https://codecov.io/gh/Chekroun2004/webguard)
-![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-161%20passing-brightgreen)
-![Deploy](https://img.shields.io/badge/deploy-Fly.io-7B3FE4?logo=fly.io)
+![License](https://img.shields.io/badge/license-academic-lightgrey)
 
 L'utilisateur soumet une URL → le système scanne → génère un rapport PDF/JSON avec sévérités et recommandations.
 
@@ -60,8 +62,8 @@ L'utilisateur soumet une URL → le système scanne → génère un rapport PDF/
 
 ```bash
 # 1. Cloner le dépôt
-git clone <repo-url>
-cd scan
+git clone https://github.com/Chekroun2004/webguard.git
+cd webguard
 
 # 2. Configurer l'environnement
 cp .env.example .env
@@ -157,7 +159,7 @@ CI automatisée via GitHub Actions à chaque push/PR sur `main` (pytest + ruff +
 ## Structure du projet
 
 ```
-scan/
+webguard/
 ├── backend/
 │   ├── app/
 │   │   ├── api/v1/          # Routes FastAPI
@@ -168,7 +170,7 @@ scan/
 │   │   ├── repositories/    # Accès base de données
 │   │   ├── templates/       # Template HTML pour PDF
 │   │   └── workers/         # Celery tasks + watchdog
-│   └── tests/               # 150 tests pytest
+│   └── tests/               # 161 tests pytest
 ├── frontend/
 │   └── src/
 │       ├── pages/           # Dashboard, Scan, Domains, Auth
@@ -190,4 +192,11 @@ Deux cibles supportées :
 
 ## Auteur
 
-**Omar Chekroun** — Master IGOV, Faculté des Sciences de Rabat, UM5
+**Omar Chekroun** — Master IGOV (M1), Faculté des Sciences de Rabat, Université Mohammed V
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Omar_Chekroun-0A66C2?logo=linkedin)](https://www.linkedin.com/in/omar-chekroun/)
+[![GitHub](https://img.shields.io/badge/GitHub-Chekroun2004-181717?logo=github)](https://github.com/Chekroun2004)
+
+## License
+
+Internal academic project — UM5 Rabat.
