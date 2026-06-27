@@ -39,6 +39,7 @@ frontend/dist/
 *.swo
 .DS_Store
 Thumbs.db
+.devcontainer/
 
 # Reports / artifacts générés
 backend/reports_output/
