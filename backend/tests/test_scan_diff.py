@@ -72,8 +72,12 @@ class TestScanDiff:
     ):
         user_id = await _user_id(client, auth_headers)
         finds = [("Missing CSP", "high", "")]
-        old_id = await _create_scan_with_findings(db_session, user_id, "https://x.com", finds)
-        new_id = await _create_scan_with_findings(db_session, user_id, "https://x.com", finds)
+        old_id = await _create_scan_with_findings(
+            db_session, user_id, "https://x.com", finds
+        )
+        new_id = await _create_scan_with_findings(
+            db_session, user_id, "https://x.com", finds
+        )
         resp = await client.get(
             f"/api/v1/scans/diff?old={old_id}&new={new_id}", headers=auth_headers
         )
@@ -87,23 +91,35 @@ class TestScanDiff:
         self, client: AsyncClient, auth_headers: dict, db_session: AsyncSession
     ):
         user_id = await _user_id(client, auth_headers)
-        old_id = await _create_scan_with_findings(db_session, user_id, "https://a.com", [])
-        new_id = await _create_scan_with_findings(db_session, user_id, "https://b.com", [])
+        old_id = await _create_scan_with_findings(
+            db_session, user_id, "https://a.com", []
+        )
+        new_id = await _create_scan_with_findings(
+            db_session, user_id, "https://b.com", []
+        )
         resp = await client.get(
             f"/api/v1/scans/diff?old={old_id}&new={new_id}", headers=auth_headers
         )
         assert resp.status_code == 400
 
-    async def test_returns_404_for_unknown_scan(self, client: AsyncClient, auth_headers: dict):
-        resp = await client.get("/api/v1/scans/diff?old=99998&new=99999", headers=auth_headers)
+    async def test_returns_404_for_unknown_scan(
+        self, client: AsyncClient, auth_headers: dict
+    ):
+        resp = await client.get(
+            "/api/v1/scans/diff?old=99998&new=99999", headers=auth_headers
+        )
         assert resp.status_code == 404
 
     async def test_returns_403_for_other_users_scan(
         self, client: AsyncClient, auth_headers: dict, db_session: AsyncSession
     ):
         user_id = await _user_id(client, auth_headers)
-        old_id = await _create_scan_with_findings(db_session, user_id, "https://x.com", [])
-        new_id = await _create_scan_with_findings(db_session, user_id, "https://x.com", [])
+        old_id = await _create_scan_with_findings(
+            db_session, user_id, "https://x.com", []
+        )
+        new_id = await _create_scan_with_findings(
+            db_session, user_id, "https://x.com", []
+        )
 
         # Register a second user
         creds = {"email": "other_diff@example.com", "password": "password123"}
@@ -111,7 +127,9 @@ class TestScanDiff:
         login = await client.post("/api/v1/auth/login", json=creds)
         headers_b = {"Authorization": f"Bearer {login.json()['access_token']}"}
 
-        resp = await client.get(f"/api/v1/scans/diff?old={old_id}&new={new_id}", headers=headers_b)
+        resp = await client.get(
+            f"/api/v1/scans/diff?old={old_id}&new={new_id}", headers=headers_b
+        )
         assert resp.status_code == 403
 
     async def test_requires_auth(self, client: AsyncClient):
@@ -122,8 +140,12 @@ class TestScanDiff:
         self, client: AsyncClient, auth_headers: dict, db_session: AsyncSession
     ):
         user_id = await _user_id(client, auth_headers)
-        old_id = await _create_scan_with_findings(db_session, user_id, "https://x.com/", [])
-        new_id = await _create_scan_with_findings(db_session, user_id, "https://x.com", [])
+        old_id = await _create_scan_with_findings(
+            db_session, user_id, "https://x.com/", []
+        )
+        new_id = await _create_scan_with_findings(
+            db_session, user_id, "https://x.com", []
+        )
         resp = await client.get(
             f"/api/v1/scans/diff?old={old_id}&new={new_id}", headers=auth_headers
         )
@@ -151,7 +173,10 @@ class TestScanDiffPdf:
             )
         assert resp.status_code == 200
         assert "application/pdf" in resp.headers["content-type"]
-        assert f"webguard-diff-{old_id}-vs-{new_id}.pdf" in resp.headers["content-disposition"]
+        assert (
+            f"webguard-diff-{old_id}-vs-{new_id}.pdf"
+            in resp.headers["content-disposition"]
+        )
 
     async def test_pdf_requires_auth(self, client: AsyncClient):
         resp = await client.get("/api/v1/scans/diff/report.pdf?old=1&new=2")
